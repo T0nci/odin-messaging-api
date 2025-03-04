@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Type {
+  TEXT
+  IMAGE
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  username      String          @unique @db.VarChar(255)
+  password      String          @db.VarChar(255)
+  profile       Profile?
+  sent_requests Request[]       @relation(name: "from")
+  requests      Request[]       @relation(name: "to")
+  user1         Friend[]        @relation(name: "user1")
+  user2         Friend[]        @relation(name: "user2")
+  messages      FriendMessage[]
+  groups        GroupMember[]
+}
+
+model Profile {
+  user         User    @relation(fields: [user_id], references: [id])
+  user_id      Int     @id
+  display_name String  @unique @db.VarChar(30)
+  bio          String  @db.VarChar(190)
+  picture      String  @default("https://res.cloudinary.com/dyi9mrxgm/image/upload/v1741103995/default_gplcic.jpg") @db.VarChar(255)
+  is_online    Boolean @default(false)
+}
+
+model Request {
+  id        Int      @id @default(autoincrement())
+  from      User     @relation(fields: [from_id], references: [id], name: "from")
+  from_id   Int
+  to        User     @relation(fields: [to_id], references: [id], name: "to")
+  to_id     Int
+  date_sent DateTime @default(dbgenerated("(now() at time zone 'utc')"))
+
+  @@unique([from_id, to_id])
+}
+
+model Friend {
+  id            Int             @id @default(autoincrement())
+  user1         User            @relation(fields: [user1_id], references: [id], name: "user1")
+  user1_id      Int
+  user2         User            @relation(fields: [user2_id], references: [id], name: "user2")
+  user2_id      Int
+  date_accepted DateTime        @default(dbgenerated("(now() at time zone 'utc')"))
+  messages      FriendMessage[]
+}
+
+model FriendMessage {
+  id        Int      @id @default(autoincrement())
+  from      User     @relation(fields: [from_id], references: [id])
+  from_id   Int
+  friend    Friend   @relation(fields: [friend_id], references: [id])
+  friend_id Int
+  content   String   @db.VarChar(1000)
+  type      Type
+  date_sent DateTime @default(dbgenerated("(now() at time zone 'utc')"))
+}
+
+model Group {
+  id      Int           @id @default(autoincrement())
+  name    String        @db.VarChar(30)
+  picture String?       @db.VarChar(255)
+  members GroupMember[]
+}
+
+model GroupMember {
+  id       Int            @id @default(autoincrement())
+  user     User           @relation(fields: [user_id], references: [id])
+  user_id  Int
+  group    Group          @relation(fields: [group_id], references: [id])
+  group_id Int
+  messages GroupMessage[]
+
+  @@unique([user_id, group_id])
+}
+
+model GroupMessage {
+  id        Int         @id @default(autoincrement())
+  from      GroupMember @relation(fields: [from_id], references: [id])
+  from_id   Int
+  content   String      @db.VarChar(1000)
+  type      Type
+  date_sent DateTime    @default(dbgenerated("(now() at time zone 'utc')"))
+}
