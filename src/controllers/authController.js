@@ -4,6 +4,45 @@ const { validationResult, body } = require("express-validator");
 const bcryptjs = require("bcryptjs");
 const jsonwebtoken = require("jsonwebtoken");
 
+const setCookies = async (req, res) => {
+  const refresh = jsonwebtoken.sign(
+    { id: req.user.id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+  const access = jsonwebtoken.sign(
+    { id: req.user.id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "30m",
+    },
+  );
+
+  res.cookie("refresh", refresh, {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+  res.cookie("access", access, {
+    maxAge: 30 * 60 * 1000,
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
+  await prisma.refreshToken.create({
+    data: {
+      token: refresh,
+      user_id: req.user.id,
+    },
+  });
+
+  return;
+};
+
 const validateRegister = () => [
   body("username")
     .trim()
@@ -80,6 +119,8 @@ const register = [
         },
       },
     });
+
+    await setCookies(req, res);
 
     res.status(201).json({ status: 201 });
   }),
