@@ -1,10 +1,21 @@
 const app = require("./app");
 const request = require("supertest")(app);
 const prisma = require("./db/client");
-const { describe, it, expect, afterAll } = require("@jest/globals");
-// const bcryptjs = require("bcryptjs");
+const { describe, it, expect, beforeAll, afterAll } = require("@jest/globals");
+const bcryptjs = require("bcryptjs");
 
 describe("authRouter", () => {
+  beforeAll(async () => {
+    const password = await bcryptjs.hash("pen@5Apple", 10);
+
+    await prisma.user.create({
+      data: {
+        username: "penny",
+        password,
+      },
+    });
+  });
+
   describe("/register", () => {
     it("returns errors when fields are missing", async () => {
       const response = await request
@@ -41,6 +52,38 @@ describe("authRouter", () => {
 
       expect(response.status).toBe(201);
       expect(response.body.status).toBe(201);
+      expect(cookies).toStrictEqual(["refresh", "access"]);
+    });
+  });
+
+  describe("/login", () => {
+    it("returns 400 error when fields are missing", async () => {
+      const response = await request.post("/login").send({ blah: "random" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.status).toBe(400);
+    });
+
+    it("returns 400 error when username and/or password are incorrect", async () => {
+      const response = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Pineapple" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.status).toBe(400);
+    });
+
+    it("returns 200 and cookies when username and password are correct", async () => {
+      const response = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const cookies = response.header["set-cookie"].map(
+        (cookie) => cookie.split("=")[0],
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
       expect(cookies).toStrictEqual(["refresh", "access"]);
     });
   });

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test && jest",
+    "test": "NODE_ENV=test jest",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js"
   },

@@ -126,7 +126,23 @@ const register = [
   }),
 ];
 
-const login = asyncHandler(async () => {});
+const login = asyncHandler(async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      username: req.body.username || "",
+    },
+  });
+
+  if (!user) return res.status(400).json({ status: 400 });
+
+  const match = await bcryptjs.compare(req.body.password, user.password);
+  if (!match) return res.status(400).json({ status: 400 });
+
+  req.user = user;
+  setCookies(req, res);
+
+  res.json({ status: 200 });
+});
 
 const isAuthenticated = asyncHandler(async () => {});
 
