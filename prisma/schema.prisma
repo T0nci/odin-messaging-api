@@ -95,6 +95,7 @@ model GroupMember {
   user_id  Int
   group    Group          @relation(fields: [group_id], references: [id])
   group_id Int
+  is_admin Boolean        @default(false)
   messages GroupMessage[]
 
   @@unique([user_id, group_id])
