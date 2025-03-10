@@ -19,15 +19,14 @@ enum Type {
 }
 
 model User {
-  id            Int             @id @default(autoincrement())
-  username      String          @unique @db.VarChar(255)
-  password      String          @db.VarChar(255)
+  id            Int            @id @default(autoincrement())
+  username      String         @unique @db.VarChar(255)
+  password      String         @db.VarChar(255)
   profile       Profile?
-  sent_requests Request[]       @relation(name: "from")
-  requests      Request[]       @relation(name: "to")
-  user1         Friend[]        @relation(name: "user1")
-  user2         Friend[]        @relation(name: "user2")
-  messages      FriendMessage[]
+  tokens        RefreshToken[]
+  sent_requests Request[]      @relation(name: "from")
+  requests      Request[]      @relation(name: "to")
+  friend        Friend[]
   groups        GroupMember[]
 }
 
@@ -38,6 +37,14 @@ model Profile {
   bio          String  @db.VarChar(190)
   picture      String  @default("https://res.cloudinary.com/dyi9mrxgm/image/upload/v1741103995/default_gplcic.jpg") @db.VarChar(255)
   is_online    Boolean @default(false)
+}
+
+model RefreshToken {
+  id      Int      @id @default(autoincrement())
+  token   String   @db.VarChar(255)
+  user    User     @relation(fields: [user_id], references: [id])
+  user_id Int
+  expires DateTime @default(dbgenerated("(now() at time zone 'utc') + interval '1d'"))
 }
 
 model Request {
@@ -51,20 +58,23 @@ model Request {
   @@unique([from_id, to_id])
 }
 
+model Friendship {
+  id            Int      @id @default(autoincrement())
+  date_accepted DateTime @default(dbgenerated("(now() at time zone 'utc')"))
+  friends       Friend[]
+}
+
 model Friend {
   id            Int             @id @default(autoincrement())
-  user1         User            @relation(fields: [user1_id], references: [id], name: "user1")
-  user1_id      Int
-  user2         User            @relation(fields: [user2_id], references: [id], name: "user2")
-  user2_id      Int
-  date_accepted DateTime        @default(dbgenerated("(now() at time zone 'utc')"))
+  user          User            @relation(fields: [user_id], references: [id])
+  user_id       Int
+  friendship    Friendship      @relation(fields: [friendship_id], references: [id])
+  friendship_id Int
   messages      FriendMessage[]
 }
 
 model FriendMessage {
   id        Int      @id @default(autoincrement())
-  from      User     @relation(fields: [from_id], references: [id])
-  from_id   Int
   friend    Friend   @relation(fields: [friend_id], references: [id])
   friend_id Int
   content   String   @db.VarChar(1000)
