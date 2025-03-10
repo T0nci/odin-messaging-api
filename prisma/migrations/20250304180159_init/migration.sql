@@ -28,7 +28,8 @@ CREATE TABLE "Request" (
     "to_id" INTEGER NOT NULL,
     "date_sent" TIMESTAMP(3) NOT NULL DEFAULT (now() at time zone 'utc'),
 
-    CONSTRAINT "Request_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Request_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "different_users" CHECK (from_id != to_id)
 );
 
 -- CreateTable
