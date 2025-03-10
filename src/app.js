@@ -4,6 +4,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const CustomError = require("./utils/CustomError");
 
+const authRouter = require("./routes/authRouter");
+
 const app = express();
 
 app.use(
@@ -14,6 +16,8 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
+
+app.use(authRouter);
 
 // if no route matched then it's a 404
 app.use((req, res, next) => next(new CustomError("Not Found", 404)));
