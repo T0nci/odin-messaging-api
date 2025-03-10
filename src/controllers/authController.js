@@ -108,7 +108,7 @@ const register = [
   asyncHandler(async (req, res) => {
     const password = await bcryptjs.hash(req.body.password, 10);
 
-    await prisma.user.create({
+    req.user = await prisma.user.create({
       data: {
         username: req.body.username,
         password,
