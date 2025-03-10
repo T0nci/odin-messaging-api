@@ -44,7 +44,7 @@ model RefreshToken {
   token   String   @db.VarChar(255)
   user    User     @relation(fields: [user_id], references: [id])
   user_id Int
-  expires DateTime @default(dbgenerated("(now() at time zone 'utc') + interval '1d'"))
+  expires DateTime @default(dbgenerated("(now() at time zone 'utc') + interval '7d'"))
 }
 
 model Request {
