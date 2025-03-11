@@ -40,8 +40,7 @@ model Profile {
 }
 
 model RefreshToken {
-  id      Int      @id @default(autoincrement())
-  token   String   @db.VarChar(255)
+  id      String   @id @default(uuid())
   user    User     @relation(fields: [user_id], references: [id])
   user_id Int
   expires DateTime @default(dbgenerated("(now() at time zone 'utc') + interval '7d'"))

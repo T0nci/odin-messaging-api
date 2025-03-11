@@ -5,13 +5,11 @@ const bcryptjs = require("bcryptjs");
 const jsonwebtoken = require("jsonwebtoken");
 
 const setCookies = async (req, res) => {
-  const refresh = jsonwebtoken.sign(
-    { id: req.user.id },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
+  const refresh = await prisma.refreshToken.create({
+    data: {
+      user_id: req.user.id,
     },
-  );
+  });
   const access = jsonwebtoken.sign(
     { id: req.user.id },
     process.env.JWT_SECRET,
@@ -20,7 +18,7 @@ const setCookies = async (req, res) => {
     },
   );
 
-  res.cookie("refresh", refresh, {
+  res.cookie("refresh", refresh.id, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: true,
@@ -31,13 +29,6 @@ const setCookies = async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-  });
-
-  await prisma.refreshToken.create({
-    data: {
-      token: refresh,
-      user_id: req.user.id,
-    },
   });
 
   return;
@@ -139,7 +130,7 @@ const login = asyncHandler(async (req, res) => {
   if (!match) return res.status(400).json({ status: 400 });
 
   req.user = user;
-  setCookies(req, res);
+  await setCookies(req, res);
 
   res.json({ status: 200 });
 });
