@@ -5,7 +5,7 @@ const cookieParser = require("cookie-parser");
 const CustomError = require("./utils/CustomError");
 
 const authRouter = require("./routes/authRouter");
-const indexRouter = require("./routes/indexRouter");
+const profileRouter = require("./routes/profileRouter");
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use(authRouter);
-app.use("/", indexRouter);
+app.use("/profile", profileRouter);
 
 // if no route matched then it's a 404
 app.use((req, res, next) => next(new CustomError("Not Found", 404)));
