@@ -35,7 +35,7 @@ model Profile {
   user_id      Int     @id
   display_name String  @unique @db.VarChar(30)
   bio          String? @db.VarChar(190)
-  picture      String  @default("https://res.cloudinary.com/dyi9mrxgm/image/upload/v1741103995/default_gplcic.jpg") @db.VarChar(255)
+  public_id    String  @default("default_gplcic") @db.VarChar(255)
   is_online    Boolean @default(false)
 }
 
