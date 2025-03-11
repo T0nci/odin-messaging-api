@@ -104,6 +104,51 @@ describe("authRouter", () => {
     });
   });
 
+  describe("/tokens", () => {
+    it("deletes all refresh tokens", async () => {
+      const cookies = (
+        await request
+          .post("/login")
+          .send({ username: "penny", password: "pen@5Apple" })
+      ).header["set-cookie"];
+
+      const response = await request.delete("/tokens").set(
+        "Cookie",
+        cookies.map((cookie) => cookie.split(";")[0]),
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(
+        response.header["set-cookie"].map(
+          (cookie) => cookie.split(";")[0].split("=")[0],
+        ),
+      ).toStrictEqual(["refresh", "access"]);
+    });
+  });
+
+  it("returns 401 when tokens are cleared", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const refreshToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("refresh"))
+      .split(";")[0];
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    await request.delete("/tokens").set("Cookie", [accessToken]);
+
+    const response = await request
+      .get("/some-protected-route")
+      .set("Cookie", [`refresh=${refreshToken}`]);
+
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe(401);
+  });
+
   it("returns 401 when trying to access protected routes without tokens", async () => {
     const response = await request.get("/some-protected-route");
 
@@ -133,12 +178,11 @@ describe("authRouter", () => {
 
     const refreshToken = login.header["set-cookie"]
       .find((cookie) => cookie.startsWith("refresh"))
-      .split(";")[0]
-      .split("=")[1];
+      .split(";")[0];
 
     const response = await request
       .get("/some-protected-route")
-      .set("Cookie", ["access=blah", `refresh=${refreshToken}`]);
+      .set("Cookie", ["access=blah", refreshToken]);
 
     expect(response.status).toBe(404);
     expect(

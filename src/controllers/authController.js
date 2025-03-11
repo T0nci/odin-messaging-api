@@ -89,6 +89,12 @@ const validateRegister = () => [
     .withMessage("Display name already exists."),
 ];
 
+const cleanUpTokens = asyncHandler(async (req, res, next) => {
+  await prisma.$executeRaw`DELETE FROM "RefreshToken" WHERE expires <= now() at time zone 'utc'`;
+
+  next();
+});
+
 const parseCookies = asyncHandler(async (req, res, next) => {
   if (req.cookies.access) {
     try {
@@ -190,9 +196,34 @@ const isAuthenticated = asyncHandler(async (req, res, next) => {
   next();
 });
 
+const deleteTokens = asyncHandler(async (req, res) => {
+  await prisma.refreshToken.deleteMany({
+    where: {
+      user_id: req.user.id,
+    },
+  });
+
+  res
+    .cookie("refresh", "", {
+      maxAge: 0,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    })
+    .cookie("access", "", {
+      maxAge: 0,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    })
+    .json({ status: 200 });
+});
+
 module.exports = {
+  cleanUpTokens,
   parseCookies,
   register,
   login,
   isAuthenticated,
+  deleteTokens,
 };
