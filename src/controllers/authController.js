@@ -141,7 +141,7 @@ const parseCookies = asyncHandler(async (req, res, next) => {
 const register = [
   validateRegister(),
   (req, res, next) => {
-    if (req.user) throw new CustomError("Not Found", 404);
+    if (req.user) return next(new CustomError("Not Found", 404));
 
     const errors = validationResult(req);
     if (!errors.isEmpty())
@@ -170,8 +170,8 @@ const register = [
   }),
 ];
 
-const login = asyncHandler(async (req, res) => {
-  if (req.user) throw new CustomError("Not Found", 404);
+const login = asyncHandler(async (req, res, next) => {
+  if (req.user) return next(new CustomError("Not Found", 404));
 
   const user = await prisma.user.findUnique({
     where: {
