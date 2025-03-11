@@ -3,7 +3,9 @@ const asyncHandler = require("express-async-handler");
 const { validationResult, body } = require("express-validator");
 const bcryptjs = require("bcryptjs");
 const jsonwebtoken = require("jsonwebtoken");
+const CustomError = require("../utils/CustomError");
 
+// callback for middlewares
 const setCookies = async (req, res) => {
   const refresh = await prisma.refreshToken.create({
     data: {
@@ -87,9 +89,54 @@ const validateRegister = () => [
     .withMessage("Display name already exists."),
 ];
 
+const parseCookies = asyncHandler(async (req, res, next) => {
+  if (req.cookies.access) {
+    try {
+      const payload = jsonwebtoken.verify(
+        req.cookies.access,
+        process.env.JWT_SECRET,
+      );
+      req.user = await prisma.user.findUnique({
+        where: {
+          id: payload.id,
+        },
+      });
+    } catch (error) {
+      if (!(error instanceof jsonwebtoken.JsonWebTokenError)) throw error;
+    }
+  }
+
+  if (!req.user && req.cookies.refresh) {
+    const token = await prisma.refreshToken.findUnique({
+      where: {
+        id: req.cookies.refresh,
+      },
+    });
+
+    if (token) {
+      req.user = await prisma.user.findUnique({
+        where: {
+          id: token.user_id,
+        },
+      });
+      await prisma.refreshToken.delete({
+        where: {
+          id: token.id,
+        },
+      });
+
+      await setCookies(req, res);
+    }
+  }
+
+  next();
+});
+
 const register = [
   validateRegister(),
   (req, res, next) => {
+    if (req.user) throw new CustomError("Not Found", 404);
+
     const errors = validationResult(req);
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
@@ -118,6 +165,8 @@ const register = [
 ];
 
 const login = asyncHandler(async (req, res) => {
+  if (req.user) throw new CustomError("Not Found", 404);
+
   const user = await prisma.user.findUnique({
     where: {
       username: req.body.username || "",
@@ -135,9 +184,14 @@ const login = asyncHandler(async (req, res) => {
   res.json({ status: 200 });
 });
 
-const isAuthenticated = asyncHandler(async () => {});
+const isAuthenticated = asyncHandler(async (req, res, next) => {
+  if (!req.user) return res.status(401).json({ status: 401 });
+
+  next();
+});
 
 module.exports = {
+  parseCookies,
   register,
   login,
   isAuthenticated,
