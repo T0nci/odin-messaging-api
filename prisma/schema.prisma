@@ -31,12 +31,12 @@ model User {
 }
 
 model Profile {
-  user         User    @relation(fields: [user_id], references: [id])
-  user_id      Int     @id
-  display_name String  @unique @db.VarChar(30)
-  bio          String? @db.VarChar(190)
-  public_id    String  @default("default_gplcic") @db.VarChar(255)
-  is_online    Boolean @default(false)
+  user            User    @relation(fields: [user_id], references: [id])
+  user_id         Int     @id
+  display_name    String  @unique @db.VarChar(30)
+  bio             String? @db.VarChar(190)
+  default_picture Boolean @default(true)
+  is_online       Boolean @default(false)
 }
 
 model RefreshToken {
