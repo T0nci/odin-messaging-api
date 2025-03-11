@@ -11,27 +11,32 @@ const {
 } = require("@jest/globals");
 const bcryptjs = require("bcryptjs");
 
-describe("authRouter", () => {
-  afterEach(async () => {
-    await prisma.refreshToken.deleteMany();
-  });
+afterEach(async () => {
+  await prisma.refreshToken.deleteMany();
+});
 
-  beforeAll(async () => {
-    const password = await bcryptjs.hash("pen@5Apple", 10);
+beforeAll(async () => {
+  const password = await bcryptjs.hash("pen@5Apple", 10);
 
-    await prisma.user.create({
-      data: {
-        username: "penny",
-        password,
+  await prisma.user.create({
+    data: {
+      username: "penny",
+      password,
+      profile: {
+        create: {
+          display_name: "Penny",
+        },
       },
-    });
+    },
   });
+});
 
-  afterAll(async () => {
-    await prisma.profile.deleteMany();
-    await prisma.user.deleteMany();
-  });
+afterAll(async () => {
+  await prisma.profile.deleteMany();
+  await prisma.user.deleteMany();
+});
 
+describe("authRouter", () => {
   describe("/register", () => {
     it("returns errors when fields are missing", async () => {
       const response = await request
@@ -182,5 +187,77 @@ describe("authRouter", () => {
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe(401);
+  });
+});
+
+describe("indexRouter", () => {
+  describe("/profile", () => {
+    it("returns 400 when trying to update with an invalid name", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/profile")
+        .send({ displayName: "Penny", bio: "" })
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns 400 when trying to update with an invalid bio", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/profile")
+        .send({
+          displayName: "Tenpenny",
+          bio: "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
+        })
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns 200 when updating successfully", async () => {
+      const displayName = "Tenpenny";
+      const bio = "Hello, my name is Tenpenny!";
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/profile")
+        .send({ displayName, bio })
+        .set("Cookie", [accessToken]);
+
+      const profile = await prisma.profile.findUnique({
+        where: {
+          display_name: "Tenpenny",
+        },
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(profile.display_name).toBe(displayName);
+      expect(profile.bio).toBe(bio);
+    });
   });
 });
