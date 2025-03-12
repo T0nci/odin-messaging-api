@@ -1,7 +1,8 @@
-const app = require("./app");
+const app = require("../app");
 const request = require("supertest")(app);
-const prisma = require("./db/client");
+const prisma = require("../db/client");
 const {
+  jest: globalJest,
   describe,
   it,
   expect,
@@ -10,6 +11,10 @@ const {
   afterEach,
 } = require("@jest/globals");
 const bcryptjs = require("bcryptjs");
+
+const path = require("node:path");
+const cloudinary = require("../utils/cloudinary");
+globalJest.mock("../utils/cloudinary");
 
 afterEach(async () => {
   await prisma.refreshToken.deleteMany();
@@ -258,6 +263,81 @@ describe("indexRouter", () => {
       expect(response.body.status).toBe(200);
       expect(profile.display_name).toBe(displayName);
       expect(profile.bio).toBe(bio);
+    });
+
+    describe("/profile/picture", () => {
+      it("returns an error if file is missing", async () => {
+        const login = await request
+          .post("/login")
+          .send({ username: "penny", password: "pen@5Apple" });
+
+        const accessToken = login.header["set-cookie"]
+          .find((cookie) => cookie.startsWith("access"))
+          .split(";")[0];
+
+        const response = await request
+          .put("/profile/picture")
+          .set("Cookie", [accessToken]);
+
+        expect(response.status).toBe(400);
+        expect(response.body.errors[0].msg).toBe("Invalid file value.");
+      });
+
+      it("returns an error if file is invalid", async () => {
+        const login = await request
+          .post("/login")
+          .send({ username: "penny", password: "pen@5Apple" });
+
+        const accessToken = login.header["set-cookie"]
+          .find((cookie) => cookie.startsWith("access"))
+          .split(";")[0];
+
+        const response = await request
+          .put("/profile/picture")
+          .attach("picture", path.join(__dirname, "doc.odt"))
+          .set("Cookie", [accessToken]);
+
+        expect(response.status).toBe(400);
+        expect(response.body.errors[0].msg).toBe("Invalid file value.");
+      });
+
+      it("successfully uploads file", async () => {
+        cloudinary.uploadImage = globalJest.fn();
+
+        const login = await request
+          .post("/login")
+          .send({ username: "penny", password: "pen@5Apple" });
+
+        const accessToken = login.header["set-cookie"]
+          .find((cookie) => cookie.startsWith("access"))
+          .split(";")[0];
+
+        const response = await request
+          .put("/profile/picture")
+          // was throwing error (aborting) because the pathname
+          // is relative from where the command is being ran
+          // so it works with joining path
+          .attach("picture", path.join(__dirname, "test.jpg"))
+          .set("Cookie", [accessToken]);
+
+        const user = await prisma.user.findUnique({
+          where: {
+            username: "penny",
+          },
+          include: {
+            profile: {
+              select: {
+                default_picture: true,
+              },
+            },
+          },
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.body.status).toBe(200);
+        expect(user.profile.default_picture).toBe(false);
+        expect(cloudinary.uploadImage).toBeCalledTimes(1);
+      });
     });
   });
 });

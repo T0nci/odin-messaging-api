@@ -67,6 +67,34 @@ const updateProfile = [
   }),
 ];
 
+const updatePicture = [
+  upload.single("picture"),
+  asyncHandler(async (req, res) => {
+    if (!req.file)
+      return res.status(400).json({
+        errors: [{ msg: "Invalid file value." }],
+      });
+
+    await cloudinary.uploadImage(
+      `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+      req.user.id,
+    );
+
+    await prisma.profile.update({
+      where: {
+        user_id: req.user.id,
+      },
+      data: {
+        default_picture: false,
+      },
+    });
+
+    res.json({ status: 200 });
+  }),
+];
+// default picture: default_gplcic
+
 module.exports = {
   updateProfile,
+  updatePicture,
 };
