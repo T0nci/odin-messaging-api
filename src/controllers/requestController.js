@@ -2,7 +2,7 @@ const prisma = require("../db/client");
 const asyncHandler = require("express-async-handler");
 const { validationResult, param } = require("express-validator");
 
-const validateUserId = () =>
+const validateSendId = () =>
   param("userId")
     .trim()
     .custom(async (userId, { req }) => {
@@ -32,7 +32,7 @@ const validateUserId = () =>
     });
 
 const postRequest = [
-  validateUserId(),
+  validateSendId(),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
