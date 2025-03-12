@@ -47,14 +47,13 @@ model RefreshToken {
 }
 
 model Request {
-  id        Int      @id @default(autoincrement())
   from      User     @relation(fields: [from_id], references: [id], name: "from")
   from_id   Int
   to        User     @relation(fields: [to_id], references: [id], name: "to")
   to_id     Int
   date_sent DateTime @default(dbgenerated("(now() at time zone 'utc')"))
 
-  @@unique([from_id, to_id])
+  @@id([from_id, to_id])
 }
 
 model Friendship {
