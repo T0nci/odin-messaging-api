@@ -21,19 +21,41 @@ afterEach(async () => {
 });
 
 beforeAll(async () => {
-  const password = await bcryptjs.hash("pen@5Apple", 10);
-
-  await prisma.user.create({
-    data: {
+  const users = [
+    {
       username: "penny",
-      password,
+      password: await bcryptjs.hash("pen@5Apple", 10),
       profile: {
         create: {
           display_name: "Penny",
         },
       },
     },
-  });
+    {
+      username: "sam1",
+      password: await bcryptjs.hash("guitar$69Sam", 10),
+      profile: {
+        create: {
+          display_name: "Sam Vaw",
+        },
+      },
+    },
+    {
+      username: "al1c3",
+      password: await bcryptjs.hash("alisha*3", 10),
+      profile: {
+        create: {
+          display_name: "Alice",
+        },
+      },
+    },
+  ];
+
+  for (const user of users) {
+    await prisma.user.create({
+      data: user,
+    });
+  }
 });
 
 afterAll(async () => {
@@ -192,6 +214,157 @@ describe("authRouter", () => {
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe(401);
+  });
+});
+
+describe("requestRouter", () => {
+  afterEach(async () => {
+    await prisma.request.deleteMany();
+    await prisma.friend.deleteMany();
+    await prisma.friendship.deleteMany();
+  });
+
+  describe("/request/:userId", () => {
+    it("returns error when trying to send request to self", async () => {
+      const user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/request/" + user.id)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe(
+        "Can't send request to yourself.",
+      );
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns error when request already exists", async () => {
+      const from_user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+      const to_user = await prisma.user.findUnique({
+        where: {
+          username: "al1c3",
+        },
+      });
+      await prisma.request.create({
+        data: {
+          from_id: from_user.id,
+          to_id: to_user.id,
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/request/" + to_user.id)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Request already exists.");
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns error when friendship already exists", async () => {
+      const from_user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+      const to_user = await prisma.user.findUnique({
+        where: {
+          username: "al1c3",
+        },
+      });
+      const friendship = await prisma.friendship.create();
+      await prisma.friend.createMany({
+        data: [
+          {
+            user_id: from_user.id,
+            friendship_id: friendship.id,
+          },
+          {
+            user_id: to_user.id,
+            friendship_id: friendship.id,
+          },
+        ],
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/request/" + to_user.id)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Can't send request to friend.");
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns error when friendship already exists", async () => {
+      const from_user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+      const to_user = await prisma.user.findUnique({
+        where: {
+          username: "al1c3",
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/request/" + to_user.id)
+        .set("Cookie", [accessToken]);
+
+      const friendRequest = await prisma.request.findUnique({
+        where: {
+          from_id_to_id: {
+            from_id: from_user.id,
+            to_id: to_user.id,
+          },
+        },
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe(201);
+      expect(friendRequest).toBeDefined();
+    });
   });
 });
 
