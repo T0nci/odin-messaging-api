@@ -224,7 +224,7 @@ describe("requestRouter", () => {
     await prisma.friendship.deleteMany();
   });
 
-  describe("/request", () => {
+  describe("/requests", () => {
     it("gets received requests", async () => {
       const from_user = await prisma.user.findUnique({
         where: {
@@ -251,10 +251,12 @@ describe("requestRouter", () => {
         .find((cookie) => cookie.startsWith("access"))
         .split(";")[0];
 
-      await request.post("/request/" + to_user.id).set("Cookie", [accessToken]);
+      await request
+        .post("/requests/" + to_user.id)
+        .set("Cookie", [accessToken]);
 
       const response = await request
-        .get("/request")
+        .get("/requests")
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(200);
@@ -280,7 +282,7 @@ describe("requestRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .post("/request/" + user.id)
+        .post("/requests/" + user.id)
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
@@ -317,7 +319,7 @@ describe("requestRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .post("/request/" + to_user.id)
+        .post("/requests/" + to_user.id)
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
@@ -359,7 +361,7 @@ describe("requestRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .post("/request/" + to_user.id)
+        .post("/requests/" + to_user.id)
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
@@ -388,7 +390,7 @@ describe("requestRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .post("/request/" + to_user.id)
+        .post("/requests/" + to_user.id)
         .set("Cookie", [accessToken]);
 
       const friendRequest = await prisma.request.findUnique({
@@ -408,7 +410,7 @@ describe("requestRouter", () => {
 });
 
 describe("profileRouter", () => {
-  describe("/profile", () => {
+  describe("/profiles", () => {
     it("returns 400 when trying to update with an invalid name", async () => {
       const login = await request
         .post("/login")
@@ -419,7 +421,7 @@ describe("profileRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .put("/profile")
+        .put("/profiles")
         .send({ displayName: "Penny", bio: "" })
         .set("Cookie", [accessToken]);
 
@@ -437,7 +439,7 @@ describe("profileRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .put("/profile")
+        .put("/profiles")
         .send({
           displayName: "Tenpenny",
           bio: "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
@@ -461,7 +463,7 @@ describe("profileRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .put("/profile")
+        .put("/profiles")
         .send({ displayName, bio })
         .set("Cookie", [accessToken]);
 
@@ -488,7 +490,7 @@ describe("profileRouter", () => {
           .split(";")[0];
 
         const response = await request
-          .put("/profile/picture")
+          .put("/profiles/picture")
           .set("Cookie", [accessToken]);
 
         expect(response.status).toBe(400);
@@ -505,7 +507,7 @@ describe("profileRouter", () => {
           .split(";")[0];
 
         const response = await request
-          .put("/profile/picture")
+          .put("/profiles/picture")
           .attach("picture", path.join(__dirname, "doc.odt"))
           .set("Cookie", [accessToken]);
 
@@ -525,7 +527,7 @@ describe("profileRouter", () => {
           .split(";")[0];
 
         const response = await request
-          .put("/profile/picture")
+          .put("/profiles/picture")
           // was throwing error (aborting) because the pathname
           // is relative from where the command is being ran
           // so it works with joining path

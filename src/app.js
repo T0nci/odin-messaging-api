@@ -20,8 +20,8 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use(authRouter);
-app.use("/profile", profileRouter);
-app.use("/request", requestRouter);
+app.use("/profiles", profileRouter);
+app.use("/requests", requestRouter);
 
 // if no route matched then it's a 404
 app.use((req, res, next) => next(new CustomError("Not Found", 404)));
