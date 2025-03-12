@@ -51,11 +51,13 @@ const postRequest = [
 
 const getRequests = asyncHandler(async (req, res) => {
   res.json(
-    await prisma.request.findMany({
-      where: {
-        to_id: req.user.id,
-      },
-    }),
+    await prisma.$queryRaw`
+      SELECT r.from_id AS "id", p.display_name AS "from", r.date_sent AS "sent"
+      FROM "Request" AS r
+      JOIN "User" AS u ON r.from_id = u.id
+      JOIN "Profile" AS p ON u.id = p.user_id
+      WHERE r.to_id = ${req.user.id}
+    `,
   );
 });
 

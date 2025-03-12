@@ -230,6 +230,13 @@ describe("requestRouter", () => {
         where: {
           username: "al1c3",
         },
+        include: {
+          profile: {
+            select: {
+              display_name: true,
+            },
+          },
+        },
       });
       const to_user = await prisma.user.findUnique({
         where: {
@@ -260,8 +267,9 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(200);
-      expect(response.body[0].from_id).toBe(from_user.id);
-      expect(response.body[0].to_id).toBe(to_user.id);
+      expect(response.body[0].id).toBe(from_user.id);
+      expect(response.body[0].from).toBe(from_user.profile.display_name);
+      expect(response.body[0].sent).toBeDefined();
     });
 
     it("gets sent requests", async () => {
