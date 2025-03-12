@@ -59,7 +59,20 @@ const getRequests = asyncHandler(async (req, res) => {
   );
 });
 
+const getSentRequests = asyncHandler(async (req, res) => {
+  res.json(
+    await prisma.$queryRaw`
+      SELECT r.to_id AS "id", p.display_name AS "to", r.date_sent AS "sent"
+      FROM "Request" AS r
+      JOIN "User" AS u ON r.to_id = u.id
+      JOIN "Profile" AS p ON p.user_id = u.id
+      WHERE r.from_id = ${req.user.id}
+    `,
+  );
+});
+
 module.exports = {
   postRequest,
   getRequests,
+  getSentRequests,
 };
