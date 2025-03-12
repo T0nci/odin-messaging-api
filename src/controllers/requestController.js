@@ -49,6 +49,17 @@ const postRequest = [
   }),
 ];
 
+const getRequests = asyncHandler(async (req, res) => {
+  res.json(
+    await prisma.request.findMany({
+      where: {
+        to_id: req.user.id,
+      },
+    }),
+  );
+});
+
 module.exports = {
   postRequest,
+  getRequests,
 };

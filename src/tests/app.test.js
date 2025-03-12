@@ -224,6 +224,45 @@ describe("requestRouter", () => {
     await prisma.friendship.deleteMany();
   });
 
+  describe("/request", () => {
+    it("gets received requests", async () => {
+      const from_user = await prisma.user.findUnique({
+        where: {
+          username: "al1c3",
+        },
+      });
+      const to_user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+      await prisma.request.create({
+        data: {
+          from_id: from_user.id,
+          to_id: to_user.id,
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      await request.post("/request/" + to_user.id).set("Cookie", [accessToken]);
+
+      const response = await request
+        .get("/request")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].from_id).toBe(from_user.id);
+      expect(response.body[0].to_id).toBe(to_user.id);
+    });
+  });
+
   describe("/request/:userId", () => {
     it("returns error when trying to send request to self", async () => {
       const user = await prisma.user.findUnique({
