@@ -195,7 +195,7 @@ describe("authRouter", () => {
   });
 });
 
-describe("indexRouter", () => {
+describe("profileRouter", () => {
   describe("/profile", () => {
     it("returns 400 when trying to update with an invalid name", async () => {
       const login = await request
