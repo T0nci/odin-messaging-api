@@ -61,6 +61,30 @@ const validateAcceptId = () =>
       if (!request) throw new Error("Request not found.");
     });
 
+const validateDeleteId = () =>
+  param("userId")
+    .trim()
+    .custom(async (userId, { req }) => {
+      if (isNaN(Number(userId))) throw new Error("Parameter must be a number.");
+
+      const request = await prisma.request.findFirst({
+        where: {
+          OR: [
+            {
+              from_id: req.user.id,
+              to_id: Number(userId),
+            },
+            {
+              from_id: Number(userId),
+              to_id: req.user.id,
+            },
+          ],
+        },
+      });
+
+      if (!request) throw new Error("Request not found.");
+    });
+
 const postRequest = [
   validateSendId(),
   asyncHandler(async (req, res) => {
@@ -151,9 +175,36 @@ const putRequest = [
   }),
 ];
 
+const deleteRequest = [
+  validateDeleteId(),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ errors: errors.array() });
+
+    await prisma.request.deleteMany({
+      where: {
+        OR: [
+          {
+            from_id: req.user.id,
+            to_id: Number(req.params.userId),
+          },
+          {
+            from_id: Number(req.params.userId),
+            to_id: req.user.id,
+          },
+        ],
+      },
+    });
+
+    res.json({ status: 200 });
+  }),
+];
+
 module.exports = {
   postRequest,
   getRequests,
   getSentRequests,
   putRequest,
+  deleteRequest,
 };
