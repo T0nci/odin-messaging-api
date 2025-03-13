@@ -516,7 +516,7 @@ describe("requestRouter", () => {
         .split(";")[0];
 
       const response = await request
-        .post("/requests/asd")
+        .put("/requests/asd")
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
@@ -542,7 +542,7 @@ describe("requestRouter", () => {
       expect(response.body.errors.length).toBe(1);
     });
 
-    it("returns error if no such request exists", async () => {
+    it("accepts request and creates a friendship", async () => {
       const from_user = await prisma.user.findUnique({
         where: {
           username: "al1c3",
