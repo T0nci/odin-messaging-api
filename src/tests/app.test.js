@@ -354,7 +354,7 @@ describe("requestRouter", () => {
       expect(response.body.errors.length).toBe(1);
     });
 
-    it("returns error when request already exists", async () => {
+    it("returns error when sent request already exists", async () => {
       const from_user = await prisma.user.findUnique({
         where: {
           username: "penny",
@@ -385,7 +385,42 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Request already exists.");
+      expect(response.body.errors[0].msg).toBe("Request is sent already.");
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns error when received request already exists", async () => {
+      const from_user = await prisma.user.findUnique({
+        where: {
+          username: "al1c3",
+        },
+      });
+      const to_user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+      await prisma.request.create({
+        data: {
+          from_id: from_user.id,
+          to_id: to_user.id,
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/requests/" + from_user.id)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Request is received already.");
       expect(response.body.errors.length).toBe(1);
     });
 

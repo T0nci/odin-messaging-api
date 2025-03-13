@@ -11,7 +11,7 @@ const validateSendId = () =>
       if (Number(userId) === req.user.id)
         throw new Error("Can't send request to yourself.");
 
-      const request = await prisma.request.findUnique({
+      const sentRequest = await prisma.request.findUnique({
         where: {
           from_id_to_id: {
             from_id: req.user.id,
@@ -19,7 +19,17 @@ const validateSendId = () =>
           },
         },
       });
-      if (request) throw new Error("Request already exists.");
+      if (sentRequest) throw new Error("Request is sent already.");
+
+      const receivedRequest = await prisma.request.findUnique({
+        where: {
+          from_id_to_id: {
+            from_id: Number(userId),
+            to_id: req.user.id,
+          },
+        },
+      });
+      if (receivedRequest) throw new Error("Request is received already.");
 
       const friend = await prisma.$queryRaw`
         SELECT *
