@@ -469,6 +469,107 @@ describe("requestRouter", () => {
       expect(friendRequest).toBeDefined();
     });
   });
+
+  describe("PUT /request/:userId", () => {
+    it("returns error when parameter is invalid", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/requests/asd")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns error if no such request exists", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/requests/" + 12)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Request not found.");
+      expect(response.body.errors.length).toBe(1);
+    });
+
+    it("returns error if no such request exists", async () => {
+      const from_user = await prisma.user.findUnique({
+        where: {
+          username: "al1c3",
+        },
+      });
+      const to_user = await prisma.user.findUnique({
+        where: {
+          username: "penny",
+        },
+      });
+      await prisma.request.create({
+        data: {
+          from_id: from_user.id,
+          to_id: to_user.id,
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/requests/" + from_user.id)
+        .set("Cookie", [accessToken]);
+
+      const friends = await prisma.friend.findMany({
+        select: {
+          user_id: true,
+          friendship_id: true,
+        },
+      });
+      const friendship = await prisma.friendship.findMany();
+      const friendshipRequest = await prisma.request.findUnique({
+        where: {
+          from_id_to_id: {
+            from_id: from_user.id,
+            to_id: to_user.id,
+          },
+        },
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe(201);
+      expect(friendshipRequest).toBeNull();
+      expect(friendship.length).toBe(1);
+      expect(friends.length).toBe(2);
+      expect(friends).toStrictEqual([
+        {
+          user_id: to_user.id,
+          friendship_id: friendship[0].id,
+        },
+        {
+          user_id: from_user.id,
+          friendship_id: friendship[0].id,
+        },
+      ]);
+    });
+  });
 });
 
 describe("profileRouter", () => {

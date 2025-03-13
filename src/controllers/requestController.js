@@ -33,6 +33,24 @@ const validateSendId = () =>
       if (friend.length) throw new Error("Can't send request to friend.");
     });
 
+const validateAcceptId = () =>
+  param("userId")
+    .trim()
+    .custom(async (userId, { req }) => {
+      if (isNaN(Number(userId))) throw new Error("Parameter must be a number.");
+
+      const request = await prisma.request.findUnique({
+        where: {
+          from_id_to_id: {
+            from_id: Number(userId),
+            to_id: req.user.id,
+          },
+        },
+      });
+
+      if (!request) throw new Error("Request not found.");
+    });
+
 const postRequest = [
   validateSendId(),
   asyncHandler(async (req, res) => {
@@ -75,8 +93,49 @@ const getSentRequests = asyncHandler(async (req, res) => {
   );
 });
 
+const putRequest = [
+  validateAcceptId(),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({
+        errors: errors.array(),
+      });
+
+    await prisma.$transaction([
+      prisma.friendship.create({
+        data: {
+          friends: {
+            createMany: {
+              data: [
+                {
+                  user_id: req.user.id,
+                },
+                {
+                  user_id: Number(req.params.userId),
+                },
+              ],
+            },
+          },
+        },
+      }),
+      prisma.request.delete({
+        where: {
+          from_id_to_id: {
+            from_id: Number(req.params.userId),
+            to_id: req.user.id,
+          },
+        },
+      }),
+    ]);
+
+    res.status(201).json({ status: 201 });
+  }),
+];
+
 module.exports = {
   postRequest,
   getRequests,
   getSentRequests,
+  putRequest,
 };
