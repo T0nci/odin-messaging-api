@@ -129,12 +129,20 @@ const putRequest = [
           },
         },
       }),
-      prisma.request.delete({
+      prisma.request.deleteMany({
         where: {
-          from_id_to_id: {
-            from_id: Number(req.params.userId),
-            to_id: req.user.id,
-          },
+          // with OR just in case the users somehow bypass
+          // the check for an existing request
+          OR: [
+            {
+              from_id: req.user.id,
+              to_id: Number(req.params.userId),
+            },
+            {
+              from_id: Number(req.params.userId),
+              to_id: req.user.id,
+            },
+          ],
         },
       }),
     ]);

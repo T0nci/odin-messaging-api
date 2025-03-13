@@ -466,7 +466,7 @@ describe("requestRouter", () => {
       expect(response.body.errors.length).toBe(1);
     });
 
-    it("returns error when friendship already exists", async () => {
+    it("creates request", async () => {
       const from_user = await prisma.user.findUnique({
         where: {
           username: "penny",
