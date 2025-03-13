@@ -6,6 +6,8 @@ const validateSendId = () =>
   param("userId")
     .trim()
     .custom(async (userId, { req }) => {
+      if (isNaN(Number(userId))) throw new Error("Parameter must be a number.");
+
       if (Number(userId) === req.user.id)
         throw new Error("Can't send request to yourself.");
 

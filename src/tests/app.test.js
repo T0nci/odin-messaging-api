@@ -309,7 +309,25 @@ describe("requestRouter", () => {
     });
   });
 
-  describe("/request/:userId", () => {
+  describe("POST /request/:userId", () => {
+    it("returns error when parameter is invalid", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .post("/requests/asd")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.errors.length).toBe(1);
+    });
+
     it("returns error when trying to send request to self", async () => {
       const user = await prisma.user.findUnique({
         where: {
