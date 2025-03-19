@@ -171,10 +171,40 @@ const getProfile = [
   }),
 ];
 
-// TODO: Add route for resetting profile picture
+const deletePicture = asyncHandler(async (req, res) => {
+  const profile = await prisma.profile.findUnique({
+    where: {
+      user_id: req.user.id,
+    },
+  });
+  if (profile.default_picture)
+    return res
+      .status(400)
+      .json({ error: "Default picture is already in use." });
+
+  await prisma.$transaction(async (tx) => {
+    // first update the profile
+    // then delete the asset
+    // this way if the query fails we didn't delete the image
+    // and if cloudinary fails the query is restored
+    await tx.profile.update({
+      where: {
+        user_id: req.user.id,
+      },
+      data: {
+        default_picture: true,
+      },
+    });
+
+    await cloudinary.deleteImage(req.user.id);
+  });
+
+  res.json({ status: 200 });
+});
 
 module.exports = {
   updateProfile,
   updatePicture,
   getProfile,
+  deletePicture,
 };

@@ -9,6 +9,7 @@ const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
 cloudinary.uploadImage = globalJest.fn();
 cloudinary.generateUrl = globalJest.fn();
+cloudinary.deleteImage = globalJest.fn();
 
 describe("PUT /profile", () => {
   it("returns 400 when trying to update with an invalid name", async () => {
@@ -341,5 +342,67 @@ describe("GET /profiles/:userId", () => {
 
     // clean up
     await deleteFriends();
+  });
+});
+
+describe("DELETE /profile/picture", () => {
+  it("returns error if default picture is already used", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .delete("/profiles/picture")
+      .attach("picture", path.join(__dirname, "data/test.jpg"))
+      .set("Cookie", [accessToken]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Default picture is already in use.");
+  });
+
+  it("successfully uploads file", async () => {
+    await prisma.profile.update({
+      where: {
+        display_name: "Penny",
+      },
+      data: {
+        default_picture: false,
+      },
+    });
+
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .delete("/profiles/picture")
+      .attach("picture", path.join(__dirname, "data/test.jpg"))
+      .set("Cookie", [accessToken]);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        username: "penny",
+      },
+      include: {
+        profile: {
+          select: {
+            default_picture: true,
+          },
+        },
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(200);
+    expect(user.profile.default_picture).toBe(true);
+    expect(cloudinary.deleteImage).toBeCalledTimes(1);
   });
 });
