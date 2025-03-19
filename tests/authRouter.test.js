@@ -75,6 +75,25 @@ describe("/login", () => {
 
 describe("/tokens", () => {
   it("deletes all refresh tokens", async () => {
+    const user = await prisma.user.findUnique({
+      where: {
+        username: "penny",
+      },
+    });
+    await prisma.refreshToken.createMany({
+      data: [
+        {
+          user_id: user.id,
+        },
+        {
+          user_id: user.id,
+        },
+        {
+          user_id: user.id,
+        },
+      ],
+    });
+
     const cookies = (
       await request
         .post("/login")
@@ -86,6 +105,12 @@ describe("/tokens", () => {
       cookies.map((cookie) => cookie.split(";")[0]),
     );
 
+    const refreshTokens = await prisma.refreshToken.findMany({
+      where: {
+        user_id: user.id,
+      },
+    });
+
     expect(response.status).toBe(200);
     expect(response.body.status).toBe(200);
     expect(
@@ -93,6 +118,7 @@ describe("/tokens", () => {
         (cookie) => cookie.split(";")[0].split("=")[0],
       ),
     ).toStrictEqual(["refresh", "access"]);
+    expect(refreshTokens.length).toBe(0);
   });
 });
 

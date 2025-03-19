@@ -1,10 +1,6 @@
 const prisma = require("../src/db/client");
-const { beforeAll, afterAll, afterEach } = require("@jest/globals");
+const { beforeAll, afterAll } = require("@jest/globals");
 const bcryptjs = require("bcryptjs");
-
-afterEach(async () => {
-  await prisma.refreshToken.deleteMany();
-});
 
 beforeAll(async () => {
   const users = [
@@ -63,12 +59,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await prisma.refreshToken.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
-});
-
-afterEach(async () => {
-  await prisma.request.deleteMany();
-  await prisma.friend.deleteMany();
-  await prisma.friendship.deleteMany();
 });

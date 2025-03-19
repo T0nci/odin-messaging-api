@@ -2,6 +2,7 @@ const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
 const { jest: globalJest, describe, it, expect } = require("@jest/globals");
+const { deleteFriends } = require("./data/cleanup");
 
 const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
@@ -266,8 +267,7 @@ describe("GET /profiles/:userId", () => {
     expect(response.body.mutualFriends).toBeUndefined();
 
     // clean up
-    await prisma.friend.deleteMany();
-    await prisma.friendship.deleteMany();
+    await deleteFriends();
   });
 
   it("returns stranger profile", async () => {
@@ -340,7 +340,6 @@ describe("GET /profiles/:userId", () => {
     ]);
 
     // clean up
-    await prisma.friend.deleteMany();
-    await prisma.friendship.deleteMany();
+    await deleteFriends();
   });
 });

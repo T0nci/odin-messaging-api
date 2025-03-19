@@ -2,6 +2,7 @@ const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
 const { describe, it, expect } = require("@jest/globals");
+const { deleteFriends, deleteRequests } = require("./data/cleanup");
 
 describe("/requests", () => {
   it("gets received requests", async () => {
@@ -47,6 +48,8 @@ describe("/requests", () => {
     expect(response.body[0].id).toBe(from_user.id);
     expect(response.body[0].from).toBe(from_user.profile.display_name);
     expect(response.body[0].sent).toBeDefined();
+
+    await deleteRequests();
   });
 
   it("gets sent requests", async () => {
@@ -81,6 +84,8 @@ describe("/requests", () => {
     expect(response.body[0].id).toBe(to_user.id);
     expect(response.body[0].to).toBe(to_user.profile.display_name);
     expect(response.body[0].sent).toBeDefined();
+
+    await deleteRequests();
   });
 });
 
@@ -160,6 +165,8 @@ describe("POST /request/:userId", () => {
     expect(response.status).toBe(400);
     expect(response.body.errors[0].msg).toBe("Request is sent already.");
     expect(response.body.errors.length).toBe(1);
+
+    await deleteRequests();
   });
 
   it("returns error when received request already exists", async () => {
@@ -195,6 +202,8 @@ describe("POST /request/:userId", () => {
     expect(response.status).toBe(400);
     expect(response.body.errors[0].msg).toBe("Request is received already.");
     expect(response.body.errors.length).toBe(1);
+
+    await deleteRequests();
   });
 
   it("returns error when friendship already exists", async () => {
@@ -237,6 +246,8 @@ describe("POST /request/:userId", () => {
     expect(response.status).toBe(400);
     expect(response.body.errors[0].msg).toBe("Can't send request to friend.");
     expect(response.body.errors.length).toBe(1);
+
+    await deleteFriends();
   });
 
   it("creates request", async () => {
@@ -275,6 +286,8 @@ describe("POST /request/:userId", () => {
     expect(response.status).toBe(201);
     expect(response.body.status).toBe(201);
     expect(friendRequest).toBeDefined();
+
+    await deleteRequests();
   });
 });
 
@@ -376,6 +389,8 @@ describe("PUT /request/:userId", () => {
         friendship_id: friendship[0].id,
       },
     ]);
+
+    await deleteFriends();
   });
 });
 
