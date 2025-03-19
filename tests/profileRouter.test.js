@@ -1,87 +1,13 @@
 const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
-const {
-  jest: globalJest,
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-} = require("@jest/globals");
-const bcryptjs = require("bcryptjs");
+const { jest: globalJest, describe, it, expect } = require("@jest/globals");
 
 const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
 cloudinary.uploadImage = globalJest.fn();
 cloudinary.generateUrl = globalJest.fn();
-
-afterEach(async () => {
-  await prisma.refreshToken.deleteMany();
-});
-
-beforeAll(async () => {
-  const users = [
-    {
-      username: "penny",
-      password: await bcryptjs.hash("pen@5Apple", 10),
-      profile: {
-        create: {
-          display_name: "Penny",
-        },
-      },
-    },
-    {
-      username: "sam1",
-      password: await bcryptjs.hash("guitar$69Sam", 10),
-      profile: {
-        create: {
-          display_name: "Sam",
-        },
-      },
-    },
-    {
-      username: "al1c3",
-      password: await bcryptjs.hash("alISha*3", 10),
-      profile: {
-        create: {
-          display_name: "Alice",
-        },
-      },
-    },
-    {
-      username: "benn",
-      password: await bcryptjs.hash("bend0VER!", 10),
-      profile: {
-        create: {
-          display_name: "Ben",
-        },
-      },
-    },
-    {
-      username: "p3ter",
-      password: await bcryptjs.hash("P4TrishA", 10),
-      profile: {
-        create: {
-          display_name: "Peter Parker",
-        },
-      },
-    },
-  ];
-
-  for (const user of users) {
-    await prisma.user.create({
-      data: user,
-    });
-  }
-});
-
-afterAll(async () => {
-  await prisma.profile.deleteMany();
-  await prisma.user.deleteMany();
-});
 
 describe("PUT /profile", () => {
   it("returns 400 when trying to update with an invalid name", async () => {

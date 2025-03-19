@@ -1,33 +1,7 @@
 const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
-const {
-  describe,
-  it,
-  expect,
-  afterEach,
-  beforeAll,
-  afterAll,
-} = require("@jest/globals");
-const bcryptjs = require("bcryptjs");
-const users = require("./data/users");
-
-afterEach(async () => {
-  await prisma.refreshToken.deleteMany();
-});
-
-beforeAll(async () => {
-  for (const user of users) {
-    await prisma.user.create({
-      data: { ...user, password: await bcryptjs.hash(user.password, 10) },
-    });
-  }
-});
-
-afterAll(async () => {
-  await prisma.profile.deleteMany();
-  await prisma.user.deleteMany();
-});
+const { describe, it, expect } = require("@jest/globals");
 
 describe("/register", () => {
   it("returns errors when fields are missing", async () => {
