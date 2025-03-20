@@ -82,3 +82,100 @@ describe("GET /friends", () => {
     await deleteFriends();
   });
 });
+
+describe("DELETE /friends/:userId", () => {
+  it("returns error when a parameter is invalid", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .delete("/friends/asd")
+      .set("Cookie", [accessToken]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors.length).toBe(1);
+    expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+  });
+
+  it("returns error when a friend is not found", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .delete("/friends/" + 12534)
+      .set("Cookie", [accessToken]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors.length).toBe(1);
+    expect(response.body.errors[0].msg).toBe("Friend not found.");
+  });
+
+  it("deletes a friend and their messages", async () => {
+    const user = users.find((user) => user.username === "penny");
+    const friend = users.find((user) => user.username === "al1c3");
+
+    const friendship = await prisma.friendship.create({
+      data: {
+        id: 1,
+      },
+    });
+    const friends = await prisma.friend.createManyAndReturn({
+      data: [
+        {
+          id: 1,
+          friendship_id: friendship.id,
+          user_id: user.id,
+        },
+        {
+          id: 2,
+          friendship_id: friendship.id,
+          user_id: friend.id,
+        },
+      ],
+    });
+    await prisma.friendMessage.createMany({
+      data: [
+        {
+          content: "Blah",
+          friend_id: friends[0].id,
+          type: "TEXT",
+        },
+        {
+          content: "Blah",
+          friend_id: friends[1].id,
+          type: "TEXT",
+        },
+      ],
+    });
+
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .delete("/friends/" + friend.id)
+      .set("Cookie", [accessToken]);
+
+    const deletedFriends = await prisma.friend.findMany();
+    const deletedMessages = await prisma.friendMessage.findMany();
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(200);
+    expect(deletedFriends.length).toBe(0);
+    expect(deletedMessages.length).toBe(0);
+  });
+});
