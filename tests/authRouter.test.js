@@ -2,6 +2,7 @@ const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
 const { describe, it, expect } = require("@jest/globals");
+const users = require("./data/users");
 
 describe("/register", () => {
   it("returns errors when fields are missing", async () => {
@@ -75,11 +76,7 @@ describe("/login", () => {
 
 describe("/tokens", () => {
   it("deletes all refresh tokens", async () => {
-    const user = await prisma.user.findUnique({
-      where: {
-        username: "penny",
-      },
-    });
+    const user = users.find((user) => user.username === "penny");
     await prisma.refreshToken.createMany({
       data: [
         {
