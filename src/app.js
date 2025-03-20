@@ -7,6 +7,7 @@ const CustomError = require("./utils/CustomError");
 const authRouter = require("./routes/authRouter");
 const profileRouter = require("./routes/profileRouter");
 const requestRouter = require("./routes/requestRouter");
+const friendRouter = require("./routes/friendRouter");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use(authRouter);
 app.use("/profiles", profileRouter);
 app.use("/requests", requestRouter);
+app.use("/friends", friendRouter);
 
 // if no route matched then it's a 404
 app.use((req, res, next) => next(new CustomError("Not Found", 404)));
