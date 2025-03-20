@@ -3,6 +3,7 @@ const request = require("supertest")(app);
 const prisma = require("../src/db/client");
 const { jest: globalJest, describe, it, expect } = require("@jest/globals");
 const { deleteFriends } = require("./data/cleanup");
+const users = require("./data/users");
 
 const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
@@ -85,7 +86,8 @@ describe("PUT /profile", () => {
         display_name: displayName,
       },
       data: {
-        display_name: "Penny",
+        display_name: users.find((user) => user.username === "penny").profile
+          .create.display_name,
         bio: null,
       },
     });
@@ -166,7 +168,7 @@ describe("PUT /profile/picture", () => {
     // clean up
     await prisma.profile.update({
       where: {
-        display_name: "Penny",
+        user_id: user.id,
       },
       data: {
         default_picture: true,
@@ -197,11 +199,7 @@ describe("GET /profiles/:userId", () => {
   it("returns own profile", async () => {
     cloudinary.generateUrl.mockReturnValueOnce("some url");
 
-    const user = await prisma.user.findUnique({
-      where: {
-        username: "penny",
-      },
-    });
+    const user = users.find((user) => user.username === "penny");
 
     const login = await request
       .post("/login")
@@ -225,24 +223,22 @@ describe("GET /profiles/:userId", () => {
   it("returns friend profile", async () => {
     cloudinary.generateUrl.mockReturnValueOnce("some url");
 
-    const from_user = await prisma.user.findUnique({
-      where: {
-        username: "penny",
+    const from_user = users.find((user) => user.username === "penny");
+    const to_user = users.find((user) => user.username === "al1c3");
+    const friendship = await prisma.friendship.create({
+      data: {
+        id: 1,
       },
     });
-    const to_user = await prisma.user.findUnique({
-      where: {
-        username: "al1c3",
-      },
-    });
-    const friendship = await prisma.friendship.create();
     await prisma.friend.createMany({
       data: [
         {
+          id: 1,
           friendship_id: friendship.id,
           user_id: from_user.id,
         },
         {
+          id: 2,
           friendship_id: friendship.id,
           user_id: to_user.id,
         },
@@ -274,43 +270,39 @@ describe("GET /profiles/:userId", () => {
   it("returns stranger profile", async () => {
     cloudinary.generateUrl.mockReturnValueOnce("some url");
 
-    const from_user = await prisma.user.findUnique({
-      where: {
-        username: "penny",
-      },
-    });
-    const mutual = await prisma.user.findUnique({
-      where: {
-        username: "sam1",
-      },
-    });
-    const to_user = await prisma.user.findUnique({
-      where: {
-        username: "al1c3",
-      },
-    });
+    const from_user = users.find((user) => user.username === "penny");
+    const mutual = users.find((user) => user.username === "sam1");
+    const to_user = users.find((user) => user.username === "al1c3");
 
-    const friendship1 = await prisma.friendship.create();
+    const friendship1 = await prisma.friendship.create({
+      data: {
+        id: 1,
+      },
+    });
+    const friendship2 = await prisma.friendship.create({
+      data: {
+        id: 2,
+      },
+    });
     await prisma.friend.createMany({
       data: [
         {
+          id: 1,
           friendship_id: friendship1.id,
           user_id: mutual.id,
         },
         {
+          id: 2,
           friendship_id: friendship1.id,
           user_id: from_user.id,
         },
-      ],
-    });
-    const friendship2 = await prisma.friendship.create();
-    await prisma.friend.createMany({
-      data: [
         {
+          id: 3,
           friendship_id: friendship2.id,
           user_id: mutual.id,
         },
         {
+          id: 4,
           friendship_id: friendship2.id,
           user_id: to_user.id,
         },
@@ -364,7 +356,7 @@ describe("DELETE /profile/picture", () => {
     expect(response.body.error).toBe("Default picture is already in use.");
   });
 
-  it("successfully uploads file", async () => {
+  it("deletes profile picture", async () => {
     await prisma.profile.update({
       where: {
         display_name: "Penny",
