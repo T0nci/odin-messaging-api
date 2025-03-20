@@ -116,54 +116,17 @@ const getProfile = [
 
     const userId = Number(req.params.userId);
 
-    const profile = (
-      await prisma.$queryRaw`
-      SELECT default_picture, display_name AS "displayName", bio
-      FROM "Profile"
-      WHERE user_id = ${userId}
-    `
-    )[0];
+    const profile = await prisma.profile.getProfile(userId);
     if (profile.default_picture)
       profile.picture = cloudinary.generateUrl(process.env.DEFAULT_PFP);
     else profile.picture = cloudinary.generateUrl(userId);
 
-    const friend = await prisma.$queryRaw`
-      SELECT *
-      FROM "Friend"
-      WHERE friendship_id IN (
-        SELECT friendship_id
-        FROM "Friend"
-        WHERE user_id = ${req.user.id}
-      ) AND user_id = ${userId};
-    `;
+    const friend = await prisma.friend.getFriends(userId, req.user.id);
     if (req.user.id !== userId && friend.length === 0) {
-      const mutuals = await prisma.$queryRaw`
-        SELECT display_name AS "displayName", user_id AS "id"
-        FROM "Profile"
-        WHERE user_id IN (
-          SELECT user_id
-          FROM "Friend"
-          WHERE user_id != ${req.user.id} AND friendship_id IN (
-            SELECT friendship_id
-            FROM "Friend"
-            WHERE user_id = ${req.user.id} AND friendship_id IN (
-              SELECT friendship_id
-              FROM "Friend"
-              WHERE user_id IN (
-                SELECT user_id
-                FROM "Friend"
-                WHERE user_id != ${userId} AND friendship_id IN (
-                  SELECT friendship_id
-                  FROM "Friend"
-                  WHERE user_id = ${userId}
-                )
-              )
-            )
-          )
-        )
-      `;
-
-      profile.mutualFriends = mutuals;
+      profile.mutualFriends = await prisma.friend.getMutuals(
+        userId,
+        req.user.id,
+      );
     }
 
     delete profile.default_picture;

@@ -43,8 +43,46 @@ prisma.friend.getFriends = async (friend1, friend2) => {
       WHERE friendship_id IN (
         SELECT friendship_id
         FROM "Friend"
-        WHERE user_id = ${friend1}
-      ) AND user_id = ${friend2}
+        WHERE user_id = ${friend2}
+      ) AND user_id = ${friend1}
+    )
+  `;
+};
+
+prisma.profile.getProfile = async (userId) => {
+  return (
+    await prisma.$queryRaw`
+      SELECT default_picture, display_name AS "displayName", bio
+      FROM "Profile"
+      WHERE user_id = ${userId}
+    `
+  )[0];
+};
+
+prisma.friend.getMutuals = async (friend1, friend2) => {
+  return await prisma.$queryRaw`
+    SELECT display_name AS "displayName", user_id AS "id"
+    FROM "Profile"
+    WHERE user_id IN (
+      SELECT user_id
+      FROM "Friend"
+      WHERE user_id != ${friend1} AND friendship_id IN (
+        SELECT friendship_id
+        FROM "Friend"
+        WHERE user_id = ${friend1} AND friendship_id IN (
+          SELECT friendship_id
+          FROM "Friend"
+          WHERE user_id IN (
+            SELECT user_id
+            FROM "Friend"
+            WHERE user_id != ${friend2} AND friendship_id IN (
+              SELECT friendship_id
+              FROM "Friend"
+              WHERE user_id = ${friend2}
+            )
+          )
+        )
+      )
     )
   `;
 };
