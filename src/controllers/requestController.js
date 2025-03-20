@@ -31,15 +31,10 @@ const validateSendId = () =>
       });
       if (receivedRequest) throw new Error("Request is received already.");
 
-      const friend = await prisma.$queryRaw`
-        SELECT *
-        FROM "Friend"
-        WHERE friendship_id IN (
-          SELECT friendship_id
-          FROM "Friend"
-          WHERE user_id = ${req.user.id}
-        ) AND user_id = ${Number(userId)};
-      `;
+      const friend = await prisma.friend.getFriends(
+        Number(userId),
+        req.user.id,
+      );
       if (friend.length) throw new Error("Can't send request to friend.");
     });
 
@@ -104,27 +99,11 @@ const postRequest = [
 ];
 
 const getRequests = asyncHandler(async (req, res) => {
-  res.json(
-    await prisma.$queryRaw`
-      SELECT r.from_id AS "id", p.display_name AS "from", r.date_sent AS "sent"
-      FROM "Request" AS r
-      JOIN "User" AS u ON r.from_id = u.id
-      JOIN "Profile" AS p ON u.id = p.user_id
-      WHERE r.to_id = ${req.user.id}
-    `,
-  );
+  res.json(await prisma.request.getRequests(req.user.id));
 });
 
 const getSentRequests = asyncHandler(async (req, res) => {
-  res.json(
-    await prisma.$queryRaw`
-      SELECT r.to_id AS "id", p.display_name AS "to", r.date_sent AS "sent"
-      FROM "Request" AS r
-      JOIN "User" AS u ON r.to_id = u.id
-      JOIN "Profile" AS p ON p.user_id = u.id
-      WHERE r.from_id = ${req.user.id}
-    `,
-  );
+  res.json(await prisma.request.getSentRequests(req.user.id));
 });
 
 const putRequest = [
