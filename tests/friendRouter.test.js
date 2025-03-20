@@ -64,21 +64,20 @@ describe("GET /friends", () => {
     const response = await request.get("/friends").set("Cookie", [accessToken]);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(
-      [
-        {
-          displayName: friend1.profile.create.display_name,
-          id: friend1.id,
-          picture: "some url",
-        },
-        {
-          displayName: friend2.profile.create.display_name,
-          id: friend2.id,
-          picture: "some url",
-        },
-        // alphabetically ordered
-      ].sort((a, b) => (a.displayName > b.displayName ? 1 : -1)),
-    );
+    expect(response.body).toEqual([
+      {
+        displayName: friend2.profile.create.display_name,
+        id: friend2.id,
+        picture: "some url",
+        dateAccepted: friendship2.date_accepted.toISOString(),
+      },
+      {
+        displayName: friend1.profile.create.display_name,
+        id: friend1.id,
+        picture: "some url",
+        dateAccepted: friendship1.date_accepted.toISOString(),
+      },
+    ]);
 
     await deleteFriends();
   });
