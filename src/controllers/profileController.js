@@ -82,7 +82,13 @@ const updateProfile = [
 ];
 
 const updatePicture = [
-  upload.single("picture"),
+  (req, res, next) => {
+    upload.single("image")(req, res, (err) => {
+      if (err instanceof multer.MulterError) return next();
+
+      next(err);
+    });
+  },
   asyncHandler(async (req, res) => {
     if (!req.file)
       return res.status(400).json({

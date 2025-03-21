@@ -123,7 +123,25 @@ describe("PUT /profile/picture", () => {
 
     const response = await request
       .put("/profiles/picture")
-      .attach("picture", path.join(__dirname, "data/doc.odt"))
+      .attach("image", path.join(__dirname, "data/doc.odt"))
+      .set("Cookie", [accessToken]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors[0].msg).toBe("Invalid file value.");
+  });
+
+  it("returns an error if file key isn't 'image'", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .put("/profiles/picture")
+      .attach("picture", path.join(__dirname, "data/test.jpg"))
       .set("Cookie", [accessToken]);
 
     expect(response.status).toBe(400);
@@ -144,7 +162,7 @@ describe("PUT /profile/picture", () => {
       // was throwing error (aborting) because the pathname
       // is relative from where the command is being ran
       // so it works with joining path
-      .attach("picture", path.join(__dirname, "data/test.jpg"))
+      .attach("image", path.join(__dirname, "data/test.jpg"))
       .set("Cookie", [accessToken]);
 
     const user = await prisma.user.findUnique({
@@ -349,7 +367,6 @@ describe("DELETE /profile/picture", () => {
 
     const response = await request
       .delete("/profiles/picture")
-      .attach("picture", path.join(__dirname, "data/test.jpg"))
       .set("Cookie", [accessToken]);
 
     expect(response.status).toBe(400);
@@ -376,7 +393,6 @@ describe("DELETE /profile/picture", () => {
 
     const response = await request
       .delete("/profiles/picture")
-      .attach("picture", path.join(__dirname, "data/test.jpg"))
       .set("Cookie", [accessToken]);
 
     const user = await prisma.user.findUnique({
