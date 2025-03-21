@@ -49,6 +49,40 @@ prisma.friend.getFriends = async (friend1, friend2) => {
   `;
 };
 
+prisma.friendship.getFriendshipId = async (friend1, friend2) => {
+  return (
+    await prisma.$queryRaw`
+    SELECT friendship_id
+    FROM "Friend"
+    WHERE user_id = ${friend1} AND friendship_id IN (
+      SELECT friendship_id
+      FROM "Friend"
+      WHERE user_id = ${friend2}
+    )
+  `
+  )[0].friendship_id;
+};
+
+prisma.friend.getUserFriends = async (userId) => {
+  // ordered by date from latest to earliest
+  return await prisma.$queryRaw`
+    SELECT f.user_id, fs.date_accepted, p.display_name, p.default_picture
+    FROM "Friend" AS f
+    JOIN "Friendship" AS fs
+    ON f.friendship_id = fs.id
+    JOIN "User" AS u
+    ON f.user_id = u.id
+    JOIN "Profile" AS p
+    ON u.id = p.user_id
+    WHERE f.user_id != ${userId} AND f.friendship_id IN (
+      SELECT friendship_id
+      FROM "Friend"
+      WHERE user_id = ${userId}
+    )
+    ORDER BY fs.date_accepted DESC
+  `;
+};
+
 prisma.profile.getProfile = async (userId) => {
   return (
     await prisma.$queryRaw`
