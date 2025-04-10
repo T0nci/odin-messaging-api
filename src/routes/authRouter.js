@@ -9,5 +9,6 @@ authRouter.post("/register", authController.register);
 authRouter.post("/login", authController.login);
 authRouter.use(authController.isAuthenticated);
 authRouter.delete("/tokens", authController.deleteTokens);
+authRouter.delete("/logout", authController.logout);
 
 module.exports = authRouter;

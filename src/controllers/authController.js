@@ -236,6 +236,33 @@ const deleteTokens = asyncHandler(async (req, res) => {
     .json({ status: 200 });
 });
 
+const logout = asyncHandler(async (req, res, next) => {
+  try {
+    await prisma.refreshToken.delete({
+      where: {
+        id: jsonwebtoken.verify(req.cookies.refresh, process.env.JWT_SECRET).id,
+      },
+    });
+  } catch (error) {
+    if (!(error instanceof jsonwebtoken.JsonWebTokenError)) next(error);
+  }
+
+  res
+    .cookie("refresh", "", {
+      maxAge: 0,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    })
+    .cookie("access", "", {
+      maxAge: 0,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    })
+    .json({ status: 200 });
+});
+
 module.exports = {
   cleanUpTokens,
   parseCookies,
@@ -243,4 +270,5 @@ module.exports = {
   login,
   isAuthenticated,
   deleteTokens,
+  logout,
 };

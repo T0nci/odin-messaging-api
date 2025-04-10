@@ -1,8 +1,10 @@
 const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
-const { describe, it, expect } = require("@jest/globals");
+const { describe, it, expect, afterEach } = require("@jest/globals");
 const users = require("./data/users");
+
+afterEach(async () => await prisma.refreshToken.deleteMany());
 
 describe("/register", () => {
   it("returns errors when fields are missing", async () => {
@@ -203,4 +205,54 @@ it("returns 401 when trying to access protected routes with tampered refresh tok
 
   expect(response.status).toBe(401);
   expect(response.body.status).toBe(401);
+});
+
+describe("DELETE /logout", () => {
+  it("logs the user out", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const tokens = login.header["set-cookie"].map(
+      (cookie) => cookie.split(";")[0],
+    );
+
+    const response = await request.delete("/logout").set("Cookie", tokens);
+
+    const cookies = response.header["set-cookie"].map(
+      (cookie) => cookie.split(";")[0].split("=")[0],
+    );
+    const refreshTokens = await prisma.refreshToken.findMany();
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(200);
+    expect(cookies.length).toBe(2);
+    expect(cookies).toStrictEqual(["refresh", "access"]);
+    expect(refreshTokens.length).toBe(0);
+  });
+
+  it("logs the user out only with access token", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .delete("/logout")
+      .set("Cookie", [accessToken]);
+
+    const cookies = response.header["set-cookie"].map(
+      (cookie) => cookie.split(";")[0].split("=")[0],
+    );
+    const refreshTokens = await prisma.refreshToken.findMany();
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(200);
+    expect(cookies.length).toBe(2);
+    expect(cookies).toStrictEqual(["refresh", "access"]); // in this order because the middleware defines them in that order
+    expect(refreshTokens.length).toBe(1);
+  });
 });
