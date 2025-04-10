@@ -49,6 +49,26 @@ const users = [
       },
     },
   },
+  {
+    id: 6,
+    username: "search1",
+    password: "s34r(h",
+    profile: {
+      create: {
+        display_name: "Sea1rch",
+      },
+    },
+  },
+  {
+    id: 7,
+    username: "search2",
+    password: "s34r(h",
+    profile: {
+      create: {
+        display_name: "Sea2rch",
+      },
+    },
+  },
 ];
 
 module.exports = users;
