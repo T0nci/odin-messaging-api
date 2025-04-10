@@ -175,3 +175,32 @@ it("returns 401 when trying to access protected routes with fake refresh token",
   expect(response.status).toBe(401);
   expect(response.body.status).toBe(401);
 });
+
+it("returns 401 when trying to access protected routes with tampered refresh token", async () => {
+  const login = await request
+    .post("/login")
+    .send({ username: "penny", password: "pen@5Apple" });
+
+  const refreshToken = login.header["set-cookie"]
+    .find((cookie) => cookie.startsWith("refresh"))
+    .split(";")[0]
+    .split("=")[1];
+
+  // modify the token - in this case I replace the third character with 1
+  // or if it's 1 already I replace it with 2
+  const modifiedToken = refreshToken.split("").map((item, index) => {
+    if (index === 3) {
+      if (item === "1") return "2";
+      else return "1";
+    }
+
+    return item;
+  });
+
+  const response = await request
+    .get("/some-protected-route")
+    .set("Cookie", [`refresh=${modifiedToken}`]);
+
+  expect(response.status).toBe(401);
+  expect(response.body.status).toBe(401);
+});

@@ -12,7 +12,15 @@ const setCookies = async (req, res) => {
       user_id: req.user.id,
     },
   });
-  const access = jsonwebtoken.sign(
+
+  const refreshToken = jsonwebtoken.sign(
+    { id: refresh.id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+  const accessToken = jsonwebtoken.sign(
     { id: req.user.id },
     process.env.JWT_SECRET,
     {
@@ -20,13 +28,13 @@ const setCookies = async (req, res) => {
     },
   );
 
-  res.cookie("refresh", refresh.id, {
+  res.cookie("refresh", refreshToken, {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: true,
     sameSite: "none",
   });
-  res.cookie("access", access, {
+  res.cookie("access", accessToken, {
     maxAge: 30 * 60 * 1000,
     httpOnly: true,
     secure: true,
@@ -113,25 +121,34 @@ const parseCookies = asyncHandler(async (req, res, next) => {
   }
 
   if (!req.user && req.cookies.refresh) {
-    const token = await prisma.refreshToken.findUnique({
-      where: {
-        id: req.cookies.refresh,
-      },
-    });
+    try {
+      const payload = jsonwebtoken.verify(
+        req.cookies.refresh,
+        process.env.JWT_SECRET,
+      );
 
-    if (token) {
-      req.user = await prisma.user.findUnique({
+      const token = await prisma.refreshToken.findUnique({
         where: {
-          id: token.user_id,
-        },
-      });
-      await prisma.refreshToken.delete({
-        where: {
-          id: token.id,
+          id: payload.id,
         },
       });
 
-      await setCookies(req, res);
+      if (token) {
+        req.user = await prisma.user.findUnique({
+          where: {
+            id: token.user_id,
+          },
+        });
+        await prisma.refreshToken.delete({
+          where: {
+            id: token.id,
+          },
+        });
+
+        await setCookies(req, res);
+      }
+    } catch (error) {
+      if (!(error instanceof jsonwebtoken.JsonWebTokenError)) throw error;
     }
   }
 
