@@ -69,18 +69,24 @@ const updatePicture = [
         errors: [{ msg: "Invalid file value." }],
       });
 
-    await cloudinary.uploadImage(
-      `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
-      req.user.id,
-    );
+    await prisma.$transaction(async (tx) => {
+      // first update the profile
+      // then upload the asset
+      // this way if the query fails we didn't update the image
+      // and if cloudinary fails the query is restored
+      await tx.profile.update({
+        where: {
+          user_id: req.user.id,
+        },
+        data: {
+          default_picture: false,
+        },
+      });
 
-    await prisma.profile.update({
-      where: {
-        user_id: req.user.id,
-      },
-      data: {
-        default_picture: false,
-      },
+      await cloudinary.uploadImage(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+        req.user.id,
+      );
     });
 
     res.json({ status: 200 });
