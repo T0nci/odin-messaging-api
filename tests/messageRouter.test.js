@@ -15,7 +15,7 @@ const users = require("./data/users");
 const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
-cloudinary.uploadImage = globalJest.fn();
+cloudinary.uploadMessageImage = globalJest.fn();
 cloudinary.generateUrl = globalJest.fn();
 
 describe("POST /messages/:userId", () => {
@@ -31,10 +31,12 @@ describe("POST /messages/:userId", () => {
     await prisma.friend.createMany({
       data: [
         {
+          id: 1,
           friendship_id: friendship.id,
           user_id: sender.id,
         },
         {
+          id: 2,
           friendship_id: friendship.id,
           user_id: receiver.id,
         },
@@ -151,5 +153,65 @@ describe("POST /messages/:userId", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.errors[0].msg).toBe("Image must be provided.");
+  });
+
+  it("returns 200 for successful text message", async () => {
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .post("/messages/" + receiver.id)
+      .set("Cookie", [accessToken])
+      .field("type", "text")
+      .field("content", "test");
+
+    const message = await prisma.friendMessage.findMany();
+    await prisma.friendMessage.deleteMany();
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(200);
+    expect(message.length).toBe(1);
+    expect(message[0].friend_id).toBe(1);
+    expect(message[0].content).toBe("test");
+    expect(message[0].type).toBe("TEXT");
+    expect(message[0].id).toBeDefined();
+    expect(message[0].date_sent).toBeDefined();
+  });
+
+  it("returns 200 for successful image message", async () => {
+    cloudinary.generateUrl.mockReturnValueOnce("some url");
+
+    const login = await request
+      .post("/login")
+      .send({ username: "penny", password: "pen@5Apple" });
+
+    const accessToken = login.header["set-cookie"]
+      .find((cookie) => cookie.startsWith("access"))
+      .split(";")[0];
+
+    const response = await request
+      .post("/messages/" + receiver.id)
+      .set("Cookie", [accessToken])
+      .field("type", "image")
+      .attach("image", path.join(__dirname, "data/test.jpg"));
+
+    const message = await prisma.friendMessage.findMany();
+    await prisma.friendMessage.deleteMany();
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe(200);
+    expect(message.length).toBe(1);
+    expect(message[0].friend_id).toBe(1);
+    expect(message[0].content).toBe("some url");
+    expect(message[0].type).toBe("IMAGE");
+    expect(message[0].id).toBeDefined();
+    expect(message[0].date_sent).toBeDefined();
+    expect(cloudinary.uploadMessageImage).toBeCalledTimes(1);
+    expect(cloudinary.generateUrl).toBeCalledTimes(1);
   });
 });
