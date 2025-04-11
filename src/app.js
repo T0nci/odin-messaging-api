@@ -9,6 +9,7 @@ const profileRouter = require("./routes/profileRouter");
 const requestRouter = require("./routes/requestRouter");
 const friendRouter = require("./routes/friendRouter");
 const userRouter = require("./routes/userRouter");
+const messageRouter = require("./routes/messageRouter");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/profiles", profileRouter);
 app.use("/requests", requestRouter);
 app.use("/friends", friendRouter);
 app.use("/users", userRouter);
+app.use("/messages", messageRouter);
 
 // if no route matched then it's a 404
 app.use((req, res, next) => next(new CustomError("Not Found", 404)));

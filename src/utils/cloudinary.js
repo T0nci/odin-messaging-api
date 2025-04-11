@@ -4,6 +4,7 @@ cloudinary.config({
   secure: true,
 });
 
+// rewrite this or have another function for the messages
 const uploadImage = async (image, user_id) => {
   const response = await cloudinary.uploader.upload(image, {
     resource_type: "image",
