@@ -80,7 +80,43 @@ const getMessages = [
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    res.json({ status: 200 });
+    const userId = Number(req.params.userId);
+
+    const firstUserId = await prisma.friend.getFriendId(req.user.id, userId);
+    const secondUserId = await prisma.friend.getFriendId(userId, req.user.id);
+
+    const messages = await prisma.friendMessage.findMany({
+      where: {
+        OR: [
+          {
+            friend_id: firstUserId,
+          },
+          {
+            friend_id: secondUserId,
+          },
+        ],
+      },
+      select: {
+        content: true,
+        date_sent: true,
+        friend_id: true,
+        type: true,
+      },
+      orderBy: [
+        {
+          date_sent: "asc",
+        },
+      ],
+    });
+
+    res.json(
+      messages.map((message) => ({
+        content: message.content,
+        date_sent: message.date_sent,
+        type: message.type.toLowerCase(),
+        me: message.friend_id === firstUserId,
+      })),
+    );
   }),
 ];
 

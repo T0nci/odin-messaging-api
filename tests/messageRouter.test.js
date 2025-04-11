@@ -268,5 +268,45 @@ describe("messageRouter", () => {
       expect(response.status).toBe(400);
       expect(response.body.errors[0].msg).toBe("Friend not found.");
     });
+
+    it("returns all messages with other user", async () => {
+      await prisma.friendMessage.createMany({
+        data: [
+          {
+            content: "test",
+            type: "TEXT",
+            friend_id: 1,
+          },
+          {
+            content: "some url",
+            type: "IMAGE",
+            friend_id: 2,
+          },
+        ],
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .get("/messages/" + receiver.id)
+        .set("Cookie", [accessToken]);
+
+      await prisma.friendMessage.deleteMany();
+
+      expect(response.status).toBe(200);
+      expect(response.body.length).toBe(2);
+      expect(response.body[0].content).toBe("test");
+      expect(response.body[0].type).toBe("text");
+      expect(response.body[0].me).toBe(true);
+      expect(response.body[1].content).toBe("some url");
+      expect(response.body[1].type).toBe("image");
+      expect(response.body[1].me).toBe(false);
+    });
   });
 });
