@@ -79,7 +79,7 @@ describe("POST /messages/:userId", () => {
       .set("Cookie", [accessToken]);
 
     expect(response.status).toBe(400);
-    expect(response.body.errors[0].msg).toBe("Can't send message to yourself.");
+    expect(response.body.errors[0].msg).toBe("ID must belong to other user.");
   });
 
   it("returns error if user is not friends with receiver", async () => {

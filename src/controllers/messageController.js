@@ -4,6 +4,7 @@ const { validationResult, param } = require("express-validator");
 
 const cloudinary = require("../utils/cloudinary");
 const { uploadWithoutError } = require("../utils/multer");
+
 const validateUserId = () =>
   param("userId")
     .trim()
@@ -11,7 +12,7 @@ const validateUserId = () =>
       if (isNaN(Number(userId))) throw new Error("Parameter must be a number.");
 
       if (Number(userId) === req.user.id)
-        throw new Error("Can't send message to yourself.");
+        throw new Error("ID must belong to other user.");
 
       const user = await prisma.friend.getFriends(Number(userId), req.user.id);
       if (!user.length) throw new Error("Friend not found.");
