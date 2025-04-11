@@ -4,9 +4,8 @@ cloudinary.config({
   secure: true,
 });
 
-// rewrite this or have another function for the messages
 const uploadImage = async (image, user_id) => {
-  const response = await cloudinary.uploader.upload(image, {
+  await cloudinary.uploader.upload(image, {
     resource_type: "image",
     asset_folder: "messaging_app",
 
@@ -15,8 +14,6 @@ const uploadImage = async (image, user_id) => {
     public_id: user_id,
     overwrite: true,
   });
-
-  return response.public_id;
 };
 
 const generateUrl = (public_id) => cloudinary.url(public_id);
@@ -27,8 +24,18 @@ const deleteImage = async (publicId) => {
   });
 };
 
+const uploadMessageImage = async (image) => {
+  const response = await cloudinary.uploader.upload(image, {
+    resource_type: "image",
+    asset_folder: "messaging_app",
+  });
+
+  return response.public_id;
+};
+
 module.exports = {
   uploadImage,
   generateUrl,
   deleteImage,
+  uploadMessageImage,
 };

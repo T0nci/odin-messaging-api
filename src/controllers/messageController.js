@@ -35,11 +35,37 @@ const postMessage = [
         return res.status(400).json({
           errors: [{ msg: "Content must be at least 1 character long." }],
         });
+
+      await prisma.friendMessage.create({
+        data: {
+          content: req.body.content,
+          type: "TEXT",
+          friend_id: await prisma.friend.getFriendId(
+            req.user.id,
+            Number(req.params.userId),
+          ),
+        },
+      });
     } else if (req.body.type === "image") {
       if (!req.file)
         return res.status(400).json({
           errors: [{ msg: "Image must be provided." }],
         });
+
+      const publicId = await cloudinary.uploadMessageImage(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+      );
+
+      await prisma.friendMessage.create({
+        data: {
+          content: cloudinary.generateUrl(publicId),
+          type: "IMAGE",
+          friend_id: await prisma.friend.getFriendId(
+            req.user.id,
+            Number(req.params.userId),
+          ),
+        },
+      });
     }
 
     res.json({ status: 200 });
