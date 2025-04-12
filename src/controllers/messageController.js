@@ -96,12 +96,6 @@ const getMessages = [
           },
         ],
       },
-      select: {
-        content: true,
-        date_sent: true,
-        friend_id: true,
-        type: true,
-      },
       orderBy: [
         {
           date_sent: "asc",
@@ -111,8 +105,9 @@ const getMessages = [
 
     res.json(
       messages.map((message) => ({
+        id: message.id,
         content: message.content,
-        date_sent: message.date_sent,
+        dateSent: message.date_sent,
         type: message.type.toLowerCase(),
         me: message.friend_id === firstUserId,
       })),

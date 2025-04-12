@@ -304,9 +304,13 @@ describe("messageRouter", () => {
       expect(response.body[0].content).toBe("test");
       expect(response.body[0].type).toBe("text");
       expect(response.body[0].me).toBe(true);
+      expect(response.body[0].dateSent).toBeDefined();
+      expect(response.body[0].id).toBeDefined();
       expect(response.body[1].content).toBe("some url");
       expect(response.body[1].type).toBe("image");
       expect(response.body[1].me).toBe(false);
+      expect(response.body[1].dateSent).toBeDefined();
+      expect(response.body[1].id).toBeDefined();
     });
   });
 });
