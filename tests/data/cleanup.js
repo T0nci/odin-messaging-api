@@ -8,4 +8,9 @@ module.exports = {
   deleteRequests: async () => {
     await prisma.request.deleteMany();
   },
+  deleteGroups: async () => {
+    await prisma.groupMessage.deleteMany();
+    await prisma.groupMember.deleteMany();
+    await prisma.group.deleteMany();
+  },
 };
