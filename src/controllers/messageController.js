@@ -78,17 +78,16 @@ const getMessages = [
 
     const userId = Number(req.params.userId);
 
-    const firstUserId = await prisma.friend.getFriendId(req.user.id, userId);
-    const secondUserId = await prisma.friend.getFriendId(userId, req.user.id);
-
-    const messages = await prisma.friendMessage.findMany({
+    const messages = await prisma.message.findMany({
       where: {
         OR: [
           {
-            friend_id: firstUserId,
+            from_id: req.user.id,
+            to_id: userId,
           },
           {
-            friend_id: secondUserId,
+            from_id: userId,
+            to_id: req.user.id,
           },
         ],
       },
@@ -108,7 +107,7 @@ const getMessages = [
             : message.content,
         dateSent: message.date_sent,
         type: message.type.toLowerCase(),
-        me: message.friend_id === firstUserId,
+        me: message.from_id === req.user.id,
       })),
     );
   }),

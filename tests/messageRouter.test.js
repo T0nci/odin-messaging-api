@@ -16,6 +16,7 @@ const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
 cloudinary.uploadMessageImage = globalJest.fn();
+cloudinary.generateUrl = globalJest.fn();
 
 describe("messageRouter", () => {
   const sender = users.find((user) => user.username === "penny");
@@ -217,7 +218,7 @@ describe("messageRouter", () => {
     });
   });
 
-  describe.skip("GET /messages/:userId", () => {
+  describe("GET /messages/:userId", () => {
     it("returns error if parameter isn't a number or is invalid", async () => {
       const login = await request
         .post("/login")
@@ -270,17 +271,21 @@ describe("messageRouter", () => {
     });
 
     it("returns all messages with other user", async () => {
-      await prisma.friendMessage.createMany({
+      cloudinary.generateUrl.mockReturnValueOnce("some url");
+
+      await prisma.message.createMany({
         data: [
           {
             content: "test",
             type: "TEXT",
-            friend_id: 1,
+            from_id: sender.id,
+            to_id: receiver.id,
           },
           {
             content: "some url",
             type: "IMAGE",
-            friend_id: 2,
+            from_id: receiver.id,
+            to_id: sender.id,
           },
         ],
       });
@@ -297,10 +302,11 @@ describe("messageRouter", () => {
         .get("/messages/" + receiver.id)
         .set("Cookie", [accessToken]);
 
-      await prisma.friendMessage.deleteMany();
+      await prisma.message.deleteMany();
 
       expect(response.status).toBe(200);
       expect(response.body.length).toBe(2);
+      expect(cloudinary.generateUrl).toBeCalledTimes(1);
       expect(response.body[0].content).toBe("test");
       expect(response.body[0].type).toBe("text");
       expect(response.body[0].me).toBe(true);
