@@ -103,10 +103,10 @@ model GroupMember {
 }
 
 model GroupMessage {
-  id        Int         @id @default(autoincrement())
-  from      GroupMember @relation(fields: [from_id], references: [id])
-  from_id   Int
-  content   String      @db.VarChar(1000)
+  id        Int          @id @default(autoincrement())
+  from      GroupMember? @relation(fields: [from_id], references: [id])
+  from_id   Int?
+  content   String       @db.VarChar(1000)
   type      Type
-  date_sent DateTime    @default(dbgenerated("(now() at time zone 'utc')"))
+  date_sent DateTime     @default(dbgenerated("(now() at time zone 'utc')"))
 }
