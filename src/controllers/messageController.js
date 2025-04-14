@@ -57,7 +57,7 @@ const postMessage = [
 
       await prisma.message.create({
         data: {
-          content: cloudinary.generateUrl(publicId),
+          content: publicId,
           type: "IMAGE",
           from_id: req.user.id,
           to_id: Number(req.params.userId),
@@ -102,7 +102,10 @@ const getMessages = [
     res.json(
       messages.map((message) => ({
         id: message.id,
-        content: message.content,
+        content:
+          message.type === "IMAGE"
+            ? cloudinary.generateUrl(message.content)
+            : message.content,
         dateSent: message.date_sent,
         type: message.type.toLowerCase(),
         me: message.friend_id === firstUserId,
