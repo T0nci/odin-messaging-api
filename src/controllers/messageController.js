@@ -37,14 +37,12 @@ const postMessage = [
           errors: [{ msg: "Content must be at least 1 character long." }],
         });
 
-      await prisma.friendMessage.create({
+      await prisma.message.create({
         data: {
           content: req.body.content,
           type: "TEXT",
-          friend_id: await prisma.friend.getFriendId(
-            req.user.id,
-            Number(req.params.userId),
-          ),
+          from_id: req.user.id,
+          to_id: Number(req.params.userId),
         },
       });
     } else if (req.body.type === "image") {
@@ -57,14 +55,12 @@ const postMessage = [
         `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
       );
 
-      await prisma.friendMessage.create({
+      await prisma.message.create({
         data: {
           content: cloudinary.generateUrl(publicId),
           type: "IMAGE",
-          friend_id: await prisma.friend.getFriendId(
-            req.user.id,
-            Number(req.params.userId),
-          ),
+          from_id: req.user.id,
+          to_id: Number(req.params.userId),
         },
       });
     }

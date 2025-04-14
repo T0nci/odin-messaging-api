@@ -123,7 +123,7 @@ describe("friendRouter", () => {
       expect(response.body.errors[0].msg).toBe("Friend not found.");
     });
 
-    it("deletes a friend and their messages", async () => {
+    it("deletes a friend", async () => {
       const user = users.find((user) => user.username === "penny");
       const friend = users.find((user) => user.username === "al1c3");
 
@@ -132,7 +132,7 @@ describe("friendRouter", () => {
           id: 1,
         },
       });
-      const friends = await prisma.friend.createManyAndReturn({
+      await prisma.friend.createMany({
         data: [
           {
             id: 1,
@@ -143,20 +143,6 @@ describe("friendRouter", () => {
             id: 2,
             friendship_id: friendship.id,
             user_id: friend.id,
-          },
-        ],
-      });
-      await prisma.friendMessage.createMany({
-        data: [
-          {
-            content: "Blah",
-            friend_id: friends[0].id,
-            type: "TEXT",
-          },
-          {
-            content: "Blah",
-            friend_id: friends[1].id,
-            type: "TEXT",
           },
         ],
       });
@@ -174,12 +160,10 @@ describe("friendRouter", () => {
         .set("Cookie", [accessToken]);
 
       const deletedFriends = await prisma.friend.findMany();
-      const deletedMessages = await prisma.friendMessage.findMany();
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe(200);
       expect(deletedFriends.length).toBe(0);
-      expect(deletedMessages.length).toBe(0);
     });
   });
 });

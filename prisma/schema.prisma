@@ -27,6 +27,8 @@ model User {
   sent_requests Request[]      @relation(name: "from")
   requests      Request[]      @relation(name: "to")
   friend        Friend[]
+  sent_messages Message[]      @relation(name: "from")
+  messages      Message[]      @relation(name: "to")
   groups        GroupMember[]
 }
 
@@ -63,18 +65,19 @@ model Friendship {
 }
 
 model Friend {
-  id            Int             @id @default(autoincrement())
-  user          User            @relation(fields: [user_id], references: [id])
+  id            Int        @id @default(autoincrement())
+  user          User       @relation(fields: [user_id], references: [id])
   user_id       Int
-  friendship    Friendship      @relation(fields: [friendship_id], references: [id])
+  friendship    Friendship @relation(fields: [friendship_id], references: [id])
   friendship_id Int
-  messages      FriendMessage[]
 }
 
-model FriendMessage {
+model Message {
   id        Int      @id @default(autoincrement())
-  friend    Friend   @relation(fields: [friend_id], references: [id])
-  friend_id Int
+  from      User     @relation(name: "from", fields: [from_id], references: [id])
+  from_id   Int
+  to        User     @relation(name: "to", fields: [to_id], references: [id])
+  to_id     Int
   content   String   @db.VarChar(1000)
   type      Type
   date_sent DateTime @default(dbgenerated("(now() at time zone 'utc')"))

@@ -43,18 +43,8 @@ const deleteFriend = [
       Number(req.params.userId),
       req.user.id,
     );
-    const friends = await prisma.friend.findMany({
-      where: {
-        friendship_id,
-      },
-    });
 
     await prisma.$transaction([
-      prisma.friendMessage.deleteMany({
-        where: {
-          OR: [{ friend_id: friends[0].id }, { friend_id: friends[1].id }],
-        },
-      }),
       prisma.friend.deleteMany({
         where: {
           friendship_id,
