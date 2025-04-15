@@ -139,7 +139,71 @@ const getMessages = [
   }),
 ];
 
+const getAllMessages = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  // getting all IDs
+  const ids = await prisma.$queryRaw`
+    SELECT DISTINCT from_id, to_id
+    FROM "Message"
+    WHERE from_id = ${userId} OR to_id = ${userId}
+  `;
+
+  const users = {};
+  for (const obj of ids) {
+    const id = obj.from_id === userId ? obj.to_id : obj.from_id;
+
+    // if user is already fetched then skip this turn
+    if (users[id]) continue;
+
+    const latestMessage = await prisma.message.findFirst({
+      where: {
+        OR: [
+          {
+            from_id: id,
+            to_id: userId,
+          },
+          {
+            from_id: userId,
+            to_id: id,
+          },
+        ],
+      },
+      orderBy: {
+        date_sent: "desc",
+      },
+      take: 1,
+    });
+    const profile = await prisma.profile.getProfile(id);
+
+    users[id] = {
+      displayName: profile.displayName,
+      picture: profile.default_picture
+        ? cloudinary.generateUrl(process.env.DEFAULT_PFP)
+        : cloudinary.generateUrl(id),
+      message: {
+        id: latestMessage.id,
+        content:
+          latestMessage.type === "IMAGE"
+            ? cloudinary.generateUrl(latestMessage.content)
+            : latestMessage.content,
+        dateSent: latestMessage.date_sent,
+        type: latestMessage.type.toLowerCase(),
+        me: latestMessage.from_id === userId,
+      },
+    };
+  }
+
+  // turn the object into an array and sort it based on the latest message
+  res.json(
+    Object.entries(users)
+      .map(([id, user]) => ({ id: Number(id), ...user }))
+      .sort((a, b) => (b.message.dateSent > a.message.dateSent ? 1 : -1)),
+  );
+});
+
 module.exports = {
   getMessages,
   postMessage,
+  getAllMessages,
 };

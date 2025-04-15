@@ -271,6 +271,7 @@ describe("messageRouter", () => {
     });
 
     it("returns all messages with other user", async () => {
+      cloudinary.generateUrl.mockReset();
       cloudinary.generateUrl.mockReturnValueOnce("some url");
 
       await prisma.message.createMany({
@@ -317,6 +318,63 @@ describe("messageRouter", () => {
       expect(response.body[1].me).toBe(false);
       expect(response.body[1].dateSent).toBeDefined();
       expect(response.body[1].id).toBeDefined();
+    });
+  });
+
+  describe("GET /messages/", () => {
+    it("returns all messages with other user", async () => {
+      cloudinary.generateUrl.mockReset();
+      cloudinary.generateUrl.mockReturnValueOnce("some url");
+      cloudinary.generateUrl.mockReturnValueOnce("some url");
+
+      await prisma.message.createMany({
+        data: [
+          {
+            content: "test",
+            type: "TEXT",
+            from_id: sender.id,
+            to_id: receiver.id,
+            date_sent: "2000-01-01T00:00:00Z",
+          },
+          {
+            content: "some url",
+            type: "IMAGE",
+            from_id: receiver.id,
+            to_id: sender.id,
+            date_sent: "2020-01-01T00:00:00Z",
+          },
+        ],
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .get("/messages/")
+        .set("Cookie", [accessToken]);
+
+      await prisma.message.deleteMany();
+
+      expect(response.status).toBe(200);
+      expect(response.body.length).toBe(1);
+      expect(cloudinary.generateUrl).toBeCalledTimes(2);
+
+      expect(response.body[0].id).toBe(receiver.id);
+      expect(response.body[0].displayName).toBe(
+        receiver.profile.create.display_name,
+      );
+      expect(response.body[0].picture).toBe("some url");
+
+      expect(response.body[0].message.id).toBeDefined();
+      expect(response.body[0].message.content).toBe("some url");
+      expect(response.body[0].message.dateSent).toBeDefined();
+      expect(response.body[0].message.type).toBe("image");
+      expect(response.body[0].message.me).toBe(false);
     });
   });
 });
