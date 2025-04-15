@@ -44,6 +44,23 @@ const validateUserIdGet = () =>
       if (!user) throw new Error("No messages found.");
     });
 
+const validateMessageId = () =>
+  param("messageId")
+    .trim()
+    .custom(async (messageId, { req }) => {
+      if (isNaN(Number(messageId)))
+        throw new Error("Parameter must be a number.");
+
+      const message = await prisma.message.findUnique({
+        where: {
+          id: Number(messageId),
+          from_id: req.user.id,
+        },
+      });
+      if (!message || message.type === "DELETED")
+        throw new Error("Message not found.");
+    });
+
 const postMessage = [
   uploadWithoutError,
   validateUserIdSend(),
@@ -202,8 +219,47 @@ const getAllMessages = asyncHandler(async (req, res) => {
   );
 });
 
+const deletedData = {
+  content: "",
+  type: "DELETED",
+};
+const deleteMessage = [
+  validateMessageId(),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ errors: errors.array() });
+
+    const message = await prisma.message.findUnique({
+      where: {
+        id: Number(req.params.messageId),
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      // first update the message
+      // then delete the asset
+      // this way if the query fails we didn't delete the image
+      // and if cloudinary fails the query is restored
+      await tx.message.update({
+        where: {
+          id: message.id,
+        },
+        data: deletedData,
+      });
+
+      if (message.type === "IMAGE") {
+        await cloudinary.deleteImage(message.content);
+      }
+    });
+
+    res.json({ status: 200 });
+  }),
+];
+
 module.exports = {
   getMessages,
   postMessage,
   getAllMessages,
+  deleteMessage,
 };

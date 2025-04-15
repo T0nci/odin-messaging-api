@@ -17,6 +17,7 @@ const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
 cloudinary.uploadMessageImage = globalJest.fn();
 cloudinary.generateUrl = globalJest.fn();
+cloudinary.deleteImage = globalJest.fn();
 
 describe("messageRouter", () => {
   const sender = users.find((user) => user.username === "penny");
@@ -375,6 +376,107 @@ describe("messageRouter", () => {
       expect(response.body[0].message.dateSent).toBeDefined();
       expect(response.body[0].message.type).toBe("image");
       expect(response.body[0].message.me).toBe(false);
+    });
+  });
+
+  describe("DELETE /messages/:messageId", () => {
+    it("returns error if parameter isn't a number or is invalid", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/messages/asd")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+    });
+
+    it("returns error if message not found or message is deleted", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/messages/123")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Message not found.");
+    });
+
+    it("deletes text message", async () => {
+      const message = await prisma.message.create({
+        data: {
+          content: "test",
+          type: "TEXT",
+          from_id: sender.id,
+          to_id: receiver.id,
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/messages/" + message.id)
+        .set("Cookie", [accessToken]);
+
+      const messages = await prisma.message.findMany();
+      await prisma.message.deleteMany(); // cleanup
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(messages[0].content).toBe("");
+      expect(messages[0].type).toBe("DELETED");
+    });
+
+    it("deletes image message", async () => {
+      cloudinary.deleteImage.mockReset();
+
+      const message = await prisma.message.create({
+        data: {
+          content: "some url",
+          type: "IMAGE",
+          from_id: sender.id,
+          to_id: receiver.id,
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/messages/" + message.id)
+        .set("Cookie", [accessToken]);
+
+      const messages = await prisma.message.findMany();
+      await prisma.message.deleteMany(); // cleanup
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(messages[0].content).toBe("");
+      expect(messages[0].type).toBe("DELETED");
+      expect(cloudinary.deleteImage).toBeCalledTimes(1);
     });
   });
 });

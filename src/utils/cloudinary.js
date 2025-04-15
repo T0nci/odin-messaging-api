@@ -19,7 +19,7 @@ const uploadImage = async (image, user_id) => {
 const generateUrl = (public_id) => cloudinary.url(public_id);
 
 const deleteImage = async (publicId) => {
-  return await cloudinary.uploader.destroy(publicId, {
+  await cloudinary.uploader.destroy(publicId, {
     invalidate: true,
   });
 };
