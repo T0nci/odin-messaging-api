@@ -253,7 +253,7 @@ describe("messageRouter", () => {
       expect(response.body.errors[0].msg).toBe("ID must belong to other user.");
     });
 
-    it("returns error if user is not friends with other user", async () => {
+    it("returns error if user doesn't have any messages with other user", async () => {
       const login = await request
         .post("/login")
         .send({ username: "penny", password: "pen@5Apple" });
@@ -267,7 +267,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Friend not found.");
+      expect(response.body.errors[0].msg).toBe("No messages found.");
     });
 
     it("returns all messages with other user", async () => {

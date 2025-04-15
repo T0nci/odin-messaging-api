@@ -121,18 +121,4 @@ prisma.friend.getMutuals = async (friend1, friend2) => {
   `;
 };
 
-prisma.friend.getFriendId = async (sender, receiver) => {
-  return (
-    await prisma.$queryRaw`
-      SELECT id
-      FROM "Friend"
-      WHERE friendship_id IN (
-        SELECT friendship_id
-        FROM "Friend"
-        WHERE user_id = ${receiver}
-      ) AND user_id = ${sender}
-  `
-  )[0].id;
-};
-
 module.exports = prisma;

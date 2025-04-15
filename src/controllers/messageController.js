@@ -5,7 +5,7 @@ const { validationResult, param } = require("express-validator");
 const cloudinary = require("../utils/cloudinary");
 const { uploadWithoutError } = require("../utils/multer");
 
-const validateUserId = () =>
+const validateUserIdSend = () =>
   param("userId")
     .trim()
     .custom(async (userId, { req }) => {
@@ -18,9 +18,35 @@ const validateUserId = () =>
       if (!user.length) throw new Error("Friend not found.");
     });
 
+const validateUserIdGet = () =>
+  param("userId")
+    .trim()
+    .custom(async (userId, { req }) => {
+      if (isNaN(Number(userId))) throw new Error("Parameter must be a number.");
+
+      if (Number(userId) === req.user.id)
+        throw new Error("ID must belong to other user.");
+
+      const user = await prisma.message.findFirst({
+        where: {
+          OR: [
+            {
+              from_id: Number(userId),
+              to_id: req.user.id,
+            },
+            {
+              from_id: req.user.id,
+              to_id: Number(userId),
+            },
+          ],
+        },
+      });
+      if (!user) throw new Error("No messages found.");
+    });
+
 const postMessage = [
   uploadWithoutError,
-  validateUserId(),
+  validateUserIdSend(),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
@@ -70,7 +96,7 @@ const postMessage = [
 ];
 
 const getMessages = [
-  validateUserId(),
+  validateUserIdGet(),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
