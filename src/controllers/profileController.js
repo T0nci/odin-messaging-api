@@ -45,7 +45,7 @@ const updateProfile = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     await prisma.profile.update({
       where: {
@@ -66,7 +66,7 @@ const updatePicture = [
   asyncHandler(async (req, res) => {
     if (!req.file)
       return res.status(400).json({
-        errors: [{ msg: "Invalid file value." }],
+        error: "Invalid file value.",
       });
 
     await prisma.$transaction(async (tx) => {
@@ -98,7 +98,7 @@ const getProfile = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     const userId = Number(req.params.userId);
 

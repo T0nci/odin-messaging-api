@@ -67,17 +67,15 @@ const postMessage = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     if (!["text", "image"].includes(req.body.type))
-      return res
-        .status(400)
-        .json({ errors: [{ msg: "Unknown message type." }] });
+      return res.status(400).json({ error: "Unknown message type." });
 
     if (req.body.type === "text") {
       if (req.body.content === undefined || req.body.content.length < 1)
         return res.status(400).json({
-          errors: [{ msg: "Content must be at least 1 character long." }],
+          error: "Content must be at least 1 character long.",
         });
 
       await prisma.message.create({
@@ -91,7 +89,7 @@ const postMessage = [
     } else if (req.body.type === "image") {
       if (!req.file)
         return res.status(400).json({
-          errors: [{ msg: "Image must be provided." }],
+          error: "Image must be provided.",
         });
 
       const publicId = await cloudinary.uploadImageWithPublicId(
@@ -117,7 +115,7 @@ const getMessages = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     const userId = Number(req.params.userId);
 
@@ -228,7 +226,7 @@ const deleteMessage = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     const message = await prisma.message.findUnique({
       where: {

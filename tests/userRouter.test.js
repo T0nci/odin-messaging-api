@@ -20,7 +20,7 @@ describe("userRouter", () => {
       const response = await request.get("/users").set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe(
+      expect(response.body.error).toBe(
         "Search name must be at least 1 character long.",
       );
     });

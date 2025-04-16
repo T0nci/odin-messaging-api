@@ -101,8 +101,7 @@ describe("friendRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors.length).toBe(1);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error when a friend is not found", async () => {
@@ -119,8 +118,7 @@ describe("friendRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors.length).toBe(1);
-      expect(response.body.errors[0].msg).toBe("Friend not found.");
+      expect(response.body.error).toBe("Friend not found.");
     });
 
     it("deletes a friend", async () => {

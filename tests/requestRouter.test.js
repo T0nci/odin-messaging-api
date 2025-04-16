@@ -29,13 +29,13 @@ describe("requestRouter", () => {
         .get("/requests")
         .set("Cookie", [accessToken]);
 
+      await deleteRequests();
+
       expect(response.status).toBe(200);
       expect(response.body.length).toBe(1);
       expect(response.body[0].id).toBe(from_user.id);
       expect(response.body[0].from).toBe(from_user.profile.create.display_name);
       expect(response.body[0].sent).toBeDefined();
-
-      await deleteRequests();
     });
 
     it("gets sent requests", async () => {
@@ -60,12 +60,12 @@ describe("requestRouter", () => {
         .get("/requests/sent")
         .set("Cookie", [accessToken]);
 
+      await deleteRequests();
+
       expect(response.status).toBe(200);
       expect(response.body[0].id).toBe(to_user.id);
       expect(response.body[0].to).toBe(to_user.profile.create.display_name);
       expect(response.body[0].sent).toBeDefined();
-
-      await deleteRequests();
     });
   });
 
@@ -84,8 +84,7 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error when trying to send request to self", async () => {
@@ -104,10 +103,7 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe(
-        "Can't send request to yourself.",
-      );
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Can't send request to yourself.");
     });
 
     it("returns error when sent request already exists", async () => {
@@ -132,11 +128,10 @@ describe("requestRouter", () => {
         .post("/requests/" + to_user.id)
         .set("Cookie", [accessToken]);
 
-      expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Request is sent already.");
-      expect(response.body.errors.length).toBe(1);
-
       await deleteRequests();
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Request is sent already.");
     });
 
     it("returns error when received request already exists", async () => {
@@ -161,11 +156,10 @@ describe("requestRouter", () => {
         .post("/requests/" + from_user.id)
         .set("Cookie", [accessToken]);
 
-      expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Request is received already.");
-      expect(response.body.errors.length).toBe(1);
-
       await deleteRequests();
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Request is received already.");
     });
 
     it("returns error when friendship already exists", async () => {
@@ -203,11 +197,10 @@ describe("requestRouter", () => {
         .post("/requests/" + to_user.id)
         .set("Cookie", [accessToken]);
 
-      expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Can't send request to friend.");
-      expect(response.body.errors.length).toBe(1);
-
       await deleteFriends();
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Can't send request to friend.");
     });
 
     it("creates request", async () => {
@@ -235,11 +228,11 @@ describe("requestRouter", () => {
         },
       });
 
+      await deleteRequests();
+
       expect(response.status).toBe(201);
       expect(response.body.status).toBe(201);
       expect(friendRequest).toBeDefined();
-
-      await deleteRequests();
     });
   });
 
@@ -258,8 +251,7 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if no such request exists", async () => {
@@ -276,8 +268,7 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Request not found.");
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Request not found.");
     });
 
     it("accepts request and creates a friendship", async () => {
@@ -318,6 +309,8 @@ describe("requestRouter", () => {
         },
       });
 
+      await deleteFriends();
+
       expect(response.status).toBe(201);
       expect(response.body.status).toBe(201);
       expect(friendshipRequest).toBeNull();
@@ -333,8 +326,6 @@ describe("requestRouter", () => {
           friendship_id: friendship[0].id,
         },
       ]);
-
-      await deleteFriends();
     });
   });
 
@@ -353,8 +344,7 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if no such request exists", async () => {
@@ -371,8 +361,7 @@ describe("requestRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Request not found.");
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Request not found.");
     });
 
     it("deletes received request", async () => {

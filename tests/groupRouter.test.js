@@ -70,7 +70,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Group must have a name.");
+      expect(response.body.error).toBe("Group must have a name.");
     });
 
     it("creates group", async () => {
@@ -140,7 +140,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if group doesn't exist", async () => {
@@ -157,7 +157,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Group not found.");
+      expect(response.body.error).toBe("Group not found.");
     });
 
     it("returns error if person trying to updated isn't an admin", async () => {
@@ -174,7 +174,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe(
+      expect(response.body.error).toBe(
         "You must be an admin to update the group.",
       );
     });
@@ -193,7 +193,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe(
+      expect(response.body.error).toBe(
         "Different name is required for updating.",
       );
     });
@@ -248,7 +248,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if group doesn't exist", async () => {
@@ -265,7 +265,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Group not found.");
+      expect(response.body.error).toBe("Group not found.");
     });
 
     it("returns error if person trying to updated isn't an admin", async () => {
@@ -282,7 +282,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe(
+      expect(response.body.error).toBe(
         "You must be an admin to update the group.",
       );
     });
@@ -302,7 +302,7 @@ describe("groupRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Invalid file.");
+      expect(response.body.error).toBe("Invalid file.");
     });
 
     it("updates group picture successfully", async () => {

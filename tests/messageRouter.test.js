@@ -64,7 +64,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if user is sending a message to self", async () => {
@@ -81,7 +81,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("ID must belong to other user.");
+      expect(response.body.error).toBe("ID must belong to other user.");
     });
 
     it("returns error if user is not friends with receiver", async () => {
@@ -98,7 +98,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Friend not found.");
+      expect(response.body.error).toBe("Friend not found.");
     });
 
     it("returns error if invalid type", async () => {
@@ -116,7 +116,7 @@ describe("messageRouter", () => {
         .field("type", "blah");
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Unknown message type.");
+      expect(response.body.error).toBe("Unknown message type.");
     });
 
     it("returns error if no or invalid content", async () => {
@@ -134,7 +134,7 @@ describe("messageRouter", () => {
         .field("type", "text");
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe(
+      expect(response.body.error).toBe(
         "Content must be at least 1 character long.",
       );
     });
@@ -154,7 +154,7 @@ describe("messageRouter", () => {
         .field("type", "image");
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Image must be provided.");
+      expect(response.body.error).toBe("Image must be provided.");
     });
 
     it("returns 200 for successful text message", async () => {
@@ -234,7 +234,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if user is getting messages from self", async () => {
@@ -251,7 +251,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("ID must belong to other user.");
+      expect(response.body.error).toBe("ID must belong to other user.");
     });
 
     it("returns error if user doesn't have any messages with other user", async () => {
@@ -268,7 +268,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("No messages found.");
+      expect(response.body.error).toBe("No messages found.");
     });
 
     it("returns all messages with other user", async () => {
@@ -398,7 +398,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns error if message not found or message is deleted", async () => {
@@ -415,7 +415,7 @@ describe("messageRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Message not found.");
+      expect(response.body.error).toBe("Message not found.");
     });
 
     it("deletes text message", async () => {

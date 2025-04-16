@@ -25,11 +25,30 @@ describe("profileRouter", () => {
 
       const response = await request
         .put("/profiles")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(
+        "Display name must be between 1 and 20 characters long.",
+      );
+    });
+
+    it("returns 400 when trying to update with an already existing name", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/profiles")
         .send({ displayName: "Penny", bio: "" })
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Display name already exists.");
     });
 
     it("returns 400 when trying to update with an invalid bio", async () => {
@@ -50,7 +69,7 @@ describe("profileRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Bio must not exceed 190 characters.");
     });
 
     it("returns 200 when updating successfully", async () => {
@@ -110,7 +129,7 @@ describe("profileRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Invalid file value.");
+      expect(response.body.error).toBe("Invalid file value.");
     });
 
     it("returns an error if file is invalid", async () => {
@@ -128,7 +147,7 @@ describe("profileRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Invalid file value.");
+      expect(response.body.error).toBe("Invalid file value.");
     });
 
     it("returns an error if file key isn't 'image'", async () => {
@@ -146,7 +165,7 @@ describe("profileRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Invalid file value.");
+      expect(response.body.error).toBe("Invalid file value.");
     });
 
     it("successfully uploads file", async () => {
@@ -211,8 +230,7 @@ describe("profileRouter", () => {
         .set("Cookie", [accessToken]);
 
       expect(response.status).toBe(400);
-      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
-      expect(response.body.errors.length).toBe(1);
+      expect(response.body.error).toBe("Parameter must be a number.");
     });
 
     it("returns own profile", async () => {

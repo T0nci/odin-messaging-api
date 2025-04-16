@@ -26,9 +26,7 @@ const validateGroupIdUpdate = () =>
 
 const createGroup = asyncHandler(async (req, res) => {
   if (!req.body.name)
-    return res
-      .status(400)
-      .json({ errors: [{ msg: "Group must have a name." }] });
+    return res.status(400).json({ error: "Group must have a name." });
 
   await prisma.group.create({
     data: {
@@ -50,7 +48,7 @@ const updateGroupName = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     const group = await prisma.group.findUnique({
       where: {
@@ -59,7 +57,7 @@ const updateGroupName = [
     });
     if (!req.body.name || group.name === req.body.name)
       return res.status(400).json({
-        errors: [{ msg: "Different name is required for updating." }],
+        error: "Different name is required for updating.",
       });
 
     await prisma.group.update({
@@ -80,14 +78,13 @@ const updateGroupPicture = [
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ error: errors.array()[0].msg });
 
     next();
   },
   uploadWithoutError,
   asyncHandler(async (req, res) => {
-    if (!req.file)
-      return res.status(400).json({ errors: [{ msg: "Invalid file." }] });
+    if (!req.file) return res.status(400).json({ error: "Invalid file." });
 
     const group = await prisma.group.findUnique({
       where: {
