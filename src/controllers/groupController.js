@@ -1,6 +1,8 @@
 const prisma = require("../db/client");
 const asyncHandler = require("express-async-handler");
 const { validationResult, param } = require("express-validator");
+const { uploadWithoutError } = require("../utils/multer");
+const cloudinary = require("../utils/cloudinary");
 
 const validateGroupIdUpdate = () =>
   param("groupId")
@@ -43,7 +45,7 @@ const createGroup = asyncHandler(async (req, res) => {
   res.status(201).json({ status: 201 });
 });
 
-const updateGroup = [
+const updateGroupName = [
   validateGroupIdUpdate(),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -56,11 +58,9 @@ const updateGroup = [
       },
     });
     if (!req.body.name || group.name === req.body.name)
-      return res
-        .status(400)
-        .json({
-          errors: [{ msg: "Different name is required for updating." }],
-        });
+      return res.status(400).json({
+        errors: [{ msg: "Different name is required for updating." }],
+      });
 
     await prisma.group.update({
       where: {
@@ -75,4 +75,58 @@ const updateGroup = [
   }),
 ];
 
-module.exports = { createGroup, updateGroup };
+const updateGroupPicture = [
+  validateGroupIdUpdate(),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ errors: errors.array() });
+
+    next();
+  },
+  uploadWithoutError,
+  asyncHandler(async (req, res) => {
+    if (!req.file)
+      return res.status(400).json({ errors: [{ msg: "Invalid file." }] });
+
+    const group = await prisma.group.findUnique({
+      where: {
+        id: Number(req.params.groupId),
+      },
+    });
+
+    if (group.picture) {
+      // update and delete the old image first, then even if something goes wrong
+      // in the upload the old image is deleted and recorded
+      await prisma.$transaction(async (tx) => {
+        await tx.group.update({
+          where: {
+            id: group.id,
+          },
+          data: {
+            picture: null,
+          },
+        });
+
+        await cloudinary.deleteImage(group.picture);
+      });
+    }
+
+    const publicId = cloudinary.uploadImageWithPublicId(
+      `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
+    );
+
+    await prisma.group.update({
+      where: {
+        id: group.id,
+      },
+      data: {
+        picture: publicId,
+      },
+    });
+
+    res.json({ status: 200 });
+  }),
+];
+
+module.exports = { createGroup, updateGroupName, updateGroupPicture };

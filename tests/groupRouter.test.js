@@ -1,9 +1,21 @@
 const app = require("../src/app");
 const request = require("supertest")(app);
 const prisma = require("../src/db/client");
-const { describe, it, expect, beforeAll, afterAll } = require("@jest/globals");
+const {
+  jest: globalJest,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+} = require("@jest/globals");
 const { deleteGroups } = require("./data/cleanup");
 const users = require("./data/users");
+
+const path = require("node:path");
+const cloudinary = require("../src/utils/cloudinary");
+globalJest.mock("../src/utils/cloudinary");
+cloudinary.uploadImageWithPublicId = globalJest.fn();
 
 describe("groupRouter", () => {
   const admin = users.find((user) => user.username === "penny");
@@ -218,6 +230,166 @@ describe("groupRouter", () => {
       expect(response.status).toBe(200);
       expect(response.body.status).toBe(200);
       expect(group.name).toBe("testing");
+    });
+  });
+
+  describe("PUT /groups/picture/:groupId", () => {
+    it("returns error if parameter isn't a number or is invalid", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/groups/picture/asd")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Parameter must be a number.");
+    });
+
+    it("returns error if group doesn't exist", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/groups/picture/123")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Group not found.");
+    });
+
+    it("returns error if person trying to updated isn't an admin", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "al1c3", password: "alISha*3" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/groups/picture/" + groupId)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe(
+        "You must be an admin to update the group.",
+      );
+    });
+
+    it("returns error if file is invalid or there is no file", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/groups/picture/" + groupId)
+        .attach("image", path.join(__dirname, "data/doc.odt"))
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.errors[0].msg).toBe("Invalid file.");
+    });
+
+    it("updates group picture successfully", async () => {
+      cloudinary.uploadImageWithPublicId.mockReset();
+      cloudinary.uploadImageWithPublicId.mockReturnValueOnce("some url");
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/groups/picture/" + groupId)
+        .set("Cookie", [accessToken])
+        .field("type", "image")
+        .attach("image", path.join(__dirname, "data/test.jpg"));
+
+      const group = await prisma.group.findUnique({
+        where: {
+          id: groupId,
+        },
+      });
+      // clean up
+      await prisma.group.update({
+        where: {
+          id: groupId,
+        },
+        data: {
+          picture: null,
+        },
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(group.picture).toBe("some url");
+      expect(cloudinary.uploadImageWithPublicId).toBeCalledTimes(1);
+    });
+
+    it("replaces group picture successfully", async () => {
+      cloudinary.uploadImageWithPublicId.mockReset();
+      cloudinary.uploadImageWithPublicId.mockReturnValueOnce("some url");
+
+      await prisma.group.update({
+        where: {
+          id: groupId,
+        },
+        data: {
+          picture: "some url 1",
+        },
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .put("/groups/picture/" + groupId)
+        .set("Cookie", [accessToken])
+        .field("type", "image")
+        .attach("image", path.join(__dirname, "data/test.jpg"));
+
+      const group = await prisma.group.findUnique({
+        where: {
+          id: groupId,
+        },
+      });
+      // clean up
+      await prisma.group.update({
+        where: {
+          id: groupId,
+        },
+        data: {
+          picture: null,
+        },
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(group.picture).toBe("some url");
+      expect(cloudinary.uploadImageWithPublicId).toBeCalledTimes(1);
     });
   });
 });
