@@ -16,6 +16,7 @@ const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
 cloudinary.uploadImageWithPublicId = globalJest.fn();
+cloudinary.deleteImage = globalJest.fn();
 
 describe("groupRouter", () => {
   const admin = users.find((user) => user.username === "penny");
@@ -320,7 +321,6 @@ describe("groupRouter", () => {
       const response = await request
         .put("/groups/picture/" + groupId)
         .set("Cookie", [accessToken])
-        .field("type", "image")
         .attach("image", path.join(__dirname, "data/test.jpg"));
 
       const group = await prisma.group.findUnique({
@@ -347,6 +347,8 @@ describe("groupRouter", () => {
     it("replaces group picture successfully", async () => {
       cloudinary.uploadImageWithPublicId.mockReset();
       cloudinary.uploadImageWithPublicId.mockResolvedValueOnce("some url");
+      cloudinary.deleteImage.mockReset();
+      cloudinary.uploadImageWithPublicId.mockResolvedValueOnce(true);
 
       await prisma.group.update({
         where: {
@@ -368,7 +370,6 @@ describe("groupRouter", () => {
       const response = await request
         .put("/groups/picture/" + groupId)
         .set("Cookie", [accessToken])
-        .field("type", "image")
         .attach("image", path.join(__dirname, "data/test.jpg"));
 
       const group = await prisma.group.findUnique({
@@ -390,6 +391,7 @@ describe("groupRouter", () => {
       expect(response.body.status).toBe(200);
       expect(group.picture).toBe("some url");
       expect(cloudinary.uploadImageWithPublicId).toBeCalledTimes(1);
+      expect(cloudinary.deleteImage).toBeCalledTimes(1);
     });
   });
 });
