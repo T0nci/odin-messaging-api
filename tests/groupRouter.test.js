@@ -307,7 +307,7 @@ describe("groupRouter", () => {
 
     it("updates group picture successfully", async () => {
       cloudinary.uploadImageWithPublicId.mockReset();
-      cloudinary.uploadImageWithPublicId.mockReturnValueOnce("some url");
+      cloudinary.uploadImageWithPublicId.mockResolvedValueOnce("some url");
 
       const login = await request
         .post("/login")
@@ -346,7 +346,7 @@ describe("groupRouter", () => {
 
     it("replaces group picture successfully", async () => {
       cloudinary.uploadImageWithPublicId.mockReset();
-      cloudinary.uploadImageWithPublicId.mockReturnValueOnce("some url");
+      cloudinary.uploadImageWithPublicId.mockResolvedValueOnce("some url");
 
       await prisma.group.update({
         where: {

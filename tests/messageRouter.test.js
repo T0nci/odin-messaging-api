@@ -187,7 +187,7 @@ describe("messageRouter", () => {
     });
 
     it("returns 200 for successful image message", async () => {
-      cloudinary.uploadImageWithPublicId.mockReturnValueOnce("some url");
+      cloudinary.uploadImageWithPublicId.mockResolvedValueOnce("some url");
 
       const login = await request
         .post("/login")

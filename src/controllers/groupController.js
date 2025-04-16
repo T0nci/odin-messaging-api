@@ -109,7 +109,7 @@ const updateGroupPicture = [
       });
     }
 
-    const publicId = cloudinary.uploadImageWithPublicId(
+    const publicId = await cloudinary.uploadImageWithPublicId(
       `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
     );
 
