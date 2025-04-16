@@ -173,18 +173,18 @@ describe("requestRouter", () => {
       const to_user = users.find((user) => user.username === "al1c3");
       const friendship = await prisma.friendship.create({
         data: {
-          id: 1,
+          id: -1,
         },
       });
       await prisma.friend.createMany({
         data: [
           {
-            id: 1,
+            id: -1,
             user_id: from_user.id,
             friendship_id: friendship.id,
           },
           {
-            id: 2,
+            id: -2,
             user_id: to_user.id,
             friendship_id: friendship.id,
           },

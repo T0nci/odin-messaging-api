@@ -22,13 +22,13 @@ describe("groupRouter", () => {
     const memberIds = await prisma.groupMember.createManyAndReturn({
       data: [
         {
-          id: 1,
+          id: -1,
           group_id: group.id,
           user_id: admin.id,
           is_admin: true,
         },
         {
-          id: 2,
+          id: -2,
           group_id: group.id,
           user_id: normalUser.id,
           is_admin: false,
@@ -205,6 +205,7 @@ describe("groupRouter", () => {
           id: groupId,
         },
       });
+      // clean up
       await prisma.group.update({
         where: {
           id: groupId,

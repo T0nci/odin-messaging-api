@@ -1,6 +1,6 @@
 const users = [
   {
-    id: 1,
+    id: -1,
     username: "penny",
     password: "pen@5Apple",
     profile: {
@@ -10,7 +10,7 @@ const users = [
     },
   },
   {
-    id: 2,
+    id: -2,
     username: "sam1",
     password: "guitar$69Sam",
     profile: {
@@ -20,7 +20,7 @@ const users = [
     },
   },
   {
-    id: 3,
+    id: -3,
     username: "al1c3",
     password: "alISha*3",
     profile: {
@@ -30,7 +30,7 @@ const users = [
     },
   },
   {
-    id: 4,
+    id: -4,
     username: "benn",
     password: "bend0VER!",
     profile: {
@@ -40,7 +40,7 @@ const users = [
     },
   },
   {
-    id: 5,
+    id: -5,
     username: "p3ter",
     password: "P4TrishA",
     profile: {
@@ -50,7 +50,7 @@ const users = [
     },
   },
   {
-    id: 6,
+    id: -6,
     username: "search1",
     password: "s34r(h",
     profile: {
@@ -60,7 +60,7 @@ const users = [
     },
   },
   {
-    id: 7,
+    id: -7,
     username: "search2",
     password: "s34r(h",
     profile: {
@@ -69,6 +69,6 @@ const users = [
       },
     },
   },
-];
+]; // TODO: UPDATE ALL INSERTIONS TO BE IN THE MINUS RANGE FOR NO COLLISIONS
 
 module.exports = users;

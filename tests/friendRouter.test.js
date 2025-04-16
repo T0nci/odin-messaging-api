@@ -21,33 +21,33 @@ describe("friendRouter", () => {
 
       const friendship1 = await prisma.friendship.create({
         data: {
-          id: 1,
+          id: -1,
         },
       });
       const friendship2 = await prisma.friendship.create({
         data: {
-          id: 2,
+          id: -2,
         },
       });
       await prisma.friend.createMany({
         data: [
           {
-            id: 1,
+            id: -1,
             friendship_id: friendship1.id,
             user_id: user.id,
           },
           {
-            id: 2,
+            id: -2,
             friendship_id: friendship1.id,
             user_id: friend1.id,
           },
           {
-            id: 3,
+            id: -3,
             friendship_id: friendship2.id,
             user_id: user.id,
           },
           {
-            id: 4,
+            id: -4,
             friendship_id: friendship2.id,
             user_id: friend2.id,
           },
@@ -129,18 +129,18 @@ describe("friendRouter", () => {
 
       const friendship = await prisma.friendship.create({
         data: {
-          id: 1,
+          id: -1,
         },
       });
       await prisma.friend.createMany({
         data: [
           {
-            id: 1,
+            id: -1,
             friendship_id: friendship.id,
             user_id: user.id,
           },
           {
-            id: 2,
+            id: -2,
             friendship_id: friendship.id,
             user_id: friend.id,
           },

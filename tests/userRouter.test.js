@@ -47,12 +47,12 @@ describe("userRouter", () => {
       expect(response.body).toStrictEqual([
         {
           displayName: "Sea1rch",
-          id: 6,
+          id: -6,
           picture: "some url",
         },
         {
           displayName: "Sea2rch",
-          id: 7,
+          id: -7,
           picture: "some url",
         },
       ]);

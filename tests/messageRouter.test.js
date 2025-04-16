@@ -26,18 +26,18 @@ describe("messageRouter", () => {
   beforeAll(async () => {
     const friendship = await prisma.friendship.create({
       data: {
-        id: 1,
+        id: -1,
       },
     });
     await prisma.friend.createManyAndReturn({
       data: [
         {
-          id: 1,
+          id: -1,
           friendship_id: friendship.id,
           user_id: sender.id,
         },
         {
-          id: 2,
+          id: -2,
           friendship_id: friendship.id,
           user_id: receiver.id,
         },
@@ -173,7 +173,7 @@ describe("messageRouter", () => {
         .field("content", "test");
 
       const message = await prisma.message.findMany();
-      await prisma.message.deleteMany();
+      await prisma.message.deleteMany(); // clean up
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe(200);
@@ -204,7 +204,7 @@ describe("messageRouter", () => {
         .attach("image", path.join(__dirname, "data/test.jpg"));
 
       const message = await prisma.message.findMany();
-      await prisma.message.deleteMany();
+      await prisma.message.deleteMany(); // clean up
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe(200);
@@ -278,14 +278,14 @@ describe("messageRouter", () => {
       await prisma.message.createMany({
         data: [
           {
-            id: 1,
+            id: -1,
             content: "test",
             type: "TEXT",
             from_id: sender.id,
             to_id: receiver.id,
           },
           {
-            id: 2,
+            id: -2,
             content: "some url",
             type: "IMAGE",
             from_id: receiver.id,
@@ -306,7 +306,7 @@ describe("messageRouter", () => {
         .get("/messages/" + receiver.id)
         .set("Cookie", [accessToken]);
 
-      await prisma.message.deleteMany();
+      await prisma.message.deleteMany(); // clean up
 
       expect(response.status).toBe(200);
       expect(response.body.length).toBe(2);
@@ -333,7 +333,7 @@ describe("messageRouter", () => {
       await prisma.message.createMany({
         data: [
           {
-            id: 1,
+            id: -1,
             content: "test",
             type: "TEXT",
             from_id: sender.id,
@@ -341,7 +341,7 @@ describe("messageRouter", () => {
             date_sent: "2000-01-01T00:00:00Z",
           },
           {
-            id: 2,
+            id: -2,
             content: "some url",
             type: "IMAGE",
             from_id: receiver.id,
@@ -363,7 +363,7 @@ describe("messageRouter", () => {
         .get("/messages/")
         .set("Cookie", [accessToken]);
 
-      await prisma.message.deleteMany();
+      await prisma.message.deleteMany(); // clean up
 
       expect(response.status).toBe(200);
       expect(response.body.length).toBe(1);
@@ -421,7 +421,7 @@ describe("messageRouter", () => {
     it("deletes text message", async () => {
       const message = await prisma.message.create({
         data: {
-          id: 1,
+          id: -1,
           content: "test",
           type: "TEXT",
           from_id: sender.id,
@@ -455,7 +455,7 @@ describe("messageRouter", () => {
 
       const message = await prisma.message.create({
         data: {
-          id: 1,
+          id: -1,
           content: "some url",
           type: "IMAGE",
           from_id: sender.id,
