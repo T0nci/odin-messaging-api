@@ -94,7 +94,7 @@ const postMessage = [
           errors: [{ msg: "Image must be provided." }],
         });
 
-      const publicId = await cloudinary.uploadMessageImage(
+      const publicId = await cloudinary.uploadImageWithPublicId(
         `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
       );
 

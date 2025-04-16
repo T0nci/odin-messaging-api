@@ -24,7 +24,7 @@ const deleteImage = async (publicId) => {
   });
 };
 
-const uploadMessageImage = async (image) => {
+const uploadImageWithPublicId = async (image) => {
   const response = await cloudinary.uploader.upload(image, {
     resource_type: "image",
     asset_folder: "messaging_app",
@@ -37,5 +37,5 @@ module.exports = {
   uploadImage,
   generateUrl,
   deleteImage,
-  uploadMessageImage,
+  uploadImageWithPublicId,
 };

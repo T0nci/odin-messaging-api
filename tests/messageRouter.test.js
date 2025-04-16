@@ -15,7 +15,7 @@ const users = require("./data/users");
 const path = require("node:path");
 const cloudinary = require("../src/utils/cloudinary");
 globalJest.mock("../src/utils/cloudinary");
-cloudinary.uploadMessageImage = globalJest.fn();
+cloudinary.uploadImageWithPublicId = globalJest.fn();
 cloudinary.generateUrl = globalJest.fn();
 cloudinary.deleteImage = globalJest.fn();
 
@@ -187,7 +187,7 @@ describe("messageRouter", () => {
     });
 
     it("returns 200 for successful image message", async () => {
-      cloudinary.uploadMessageImage.mockReturnValueOnce("some url");
+      cloudinary.uploadImageWithPublicId.mockReturnValueOnce("some url");
 
       const login = await request
         .post("/login")
@@ -215,7 +215,7 @@ describe("messageRouter", () => {
       expect(message[0].type).toBe("IMAGE");
       expect(message[0].id).toBeDefined();
       expect(message[0].date_sent).toBeDefined();
-      expect(cloudinary.uploadMessageImage).toBeCalledTimes(1);
+      expect(cloudinary.uploadImageWithPublicId).toBeCalledTimes(1);
     });
   });
 
