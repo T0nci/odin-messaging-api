@@ -126,4 +126,59 @@ const updateGroupPicture = [
   }),
 ];
 
-module.exports = { createGroup, updateGroupName, updateGroupPicture };
+const deleteGroup = [
+  validateGroupId(),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ error: errors.array()[0].msg });
+
+    const group = await prisma.group.findUnique({
+      where: {
+        id: Number(req.params.groupId),
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      const groupMemberIds = (
+        await tx.groupMember.findMany({
+          where: {
+            group_id: group.id,
+          },
+        })
+      ).map((row) => row.id);
+
+      await tx.groupMessage.deleteMany({
+        where: {
+          from_id: {
+            in: groupMemberIds,
+          },
+        },
+      });
+      await tx.groupMember.deleteMany({
+        where: {
+          id: {
+            in: groupMemberIds,
+          },
+        },
+      });
+      await tx.group.delete({
+        where: {
+          id: group.id,
+        },
+      });
+
+      // if picture fails to delete the deletes are reverted
+      if (group.picture) await cloudinary.deleteImage(group.picture);
+    });
+
+    res.json({ status: 200 });
+  }),
+];
+
+module.exports = {
+  createGroup,
+  updateGroupName,
+  updateGroupPicture,
+  deleteGroup,
+};

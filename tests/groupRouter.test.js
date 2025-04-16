@@ -394,4 +394,126 @@ describe("groupRouter", () => {
       expect(cloudinary.deleteImage).toBeCalledTimes(1);
     });
   });
+
+  describe("DELETE /groups/:groupId", () => {
+    it("returns error if parameter isn't a number or is invalid", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/groups/asd")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Parameter must be a number.");
+    });
+
+    it("returns error if group doesn't exist", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/groups/123")
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Group not found.");
+    });
+
+    it("returns error if person trying to updated isn't an admin", async () => {
+      const login = await request
+        .post("/login")
+        .send({ username: "al1c3", password: "alISha*3" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/groups/" + groupId)
+        .set("Cookie", [accessToken]);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(
+        "You must be an admin to do this action.",
+      );
+    });
+
+    it("deletes group successfully", async () => {
+      const newGroup = await prisma.group.create({
+        data: {
+          name: "to be deleted",
+        },
+      });
+      const newMembers = await prisma.groupMember.createManyAndReturn({
+        data: [
+          {
+            id: -3,
+            user_id: admin.id,
+            is_admin: true,
+            group_id: newGroup.id,
+          },
+          {
+            id: -4,
+            user_id: normalUser.id,
+            group_id: newGroup.id,
+          },
+        ],
+      });
+      await prisma.groupMessage.createMany({
+        data: [
+          {
+            from_id: newMembers[0].id,
+            content: "test",
+            type: "TEXT",
+          },
+          {
+            from_id: newMembers[1].id,
+            content: "test",
+            type: "TEXT",
+          },
+        ],
+      });
+
+      const login = await request
+        .post("/login")
+        .send({ username: "penny", password: "pen@5Apple" });
+
+      const accessToken = login.header["set-cookie"]
+        .find((cookie) => cookie.startsWith("access"))
+        .split(";")[0];
+
+      const response = await request
+        .delete("/groups/" + newGroup.id)
+        .set("Cookie", [accessToken]);
+
+      const group = await prisma.group.findFirst({
+        where: {
+          id: newGroup.id,
+        },
+      });
+      const members = await prisma.groupMember.findMany({
+        where: {
+          group_id: newGroup.id,
+        },
+      });
+      const messages = await prisma.groupMessage.findMany();
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe(200);
+      expect(group).toBeNull();
+      expect(members.length).toBe(0);
+      expect(messages.length).toBe(0);
+    });
+  });
 });
