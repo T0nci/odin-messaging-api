@@ -278,12 +278,14 @@ describe("messageRouter", () => {
       await prisma.message.createMany({
         data: [
           {
+            id: 1,
             content: "test",
             type: "TEXT",
             from_id: sender.id,
             to_id: receiver.id,
           },
           {
+            id: 2,
             content: "some url",
             type: "IMAGE",
             from_id: receiver.id,
@@ -331,6 +333,7 @@ describe("messageRouter", () => {
       await prisma.message.createMany({
         data: [
           {
+            id: 1,
             content: "test",
             type: "TEXT",
             from_id: sender.id,
@@ -338,6 +341,7 @@ describe("messageRouter", () => {
             date_sent: "2000-01-01T00:00:00Z",
           },
           {
+            id: 2,
             content: "some url",
             type: "IMAGE",
             from_id: receiver.id,
@@ -417,6 +421,7 @@ describe("messageRouter", () => {
     it("deletes text message", async () => {
       const message = await prisma.message.create({
         data: {
+          id: 1,
           content: "test",
           type: "TEXT",
           from_id: sender.id,
@@ -450,6 +455,7 @@ describe("messageRouter", () => {
 
       const message = await prisma.message.create({
         data: {
+          id: 1,
           content: "some url",
           type: "IMAGE",
           from_id: sender.id,
