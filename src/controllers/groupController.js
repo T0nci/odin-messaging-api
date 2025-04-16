@@ -4,7 +4,7 @@ const { validationResult, param } = require("express-validator");
 const { uploadWithoutError } = require("../utils/multer");
 const cloudinary = require("../utils/cloudinary");
 
-const validateGroupIdUpdate = () =>
+const validateGroupId = () =>
   param("groupId")
     .trim()
     .custom(async (groupId, { req }) => {
@@ -21,7 +21,7 @@ const validateGroupIdUpdate = () =>
       if (!member) throw new Error("Group not found.");
 
       if (!member.is_admin)
-        throw new Error("You must be an admin to update the group.");
+        throw new Error("You must be an admin to do this action.");
     });
 
 const createGroup = asyncHandler(async (req, res) => {
@@ -44,7 +44,7 @@ const createGroup = asyncHandler(async (req, res) => {
 });
 
 const updateGroupName = [
-  validateGroupIdUpdate(),
+  validateGroupId(),
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
@@ -74,7 +74,7 @@ const updateGroupName = [
 ];
 
 const updateGroupPicture = [
-  validateGroupIdUpdate(),
+  validateGroupId(),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())

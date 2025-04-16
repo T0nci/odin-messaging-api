@@ -175,7 +175,7 @@ describe("groupRouter", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe(
-        "You must be an admin to update the group.",
+        "You must be an admin to do this action.",
       );
     });
 
@@ -283,7 +283,7 @@ describe("groupRouter", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe(
-        "You must be an admin to update the group.",
+        "You must be an admin to do this action.",
       );
     });
 
